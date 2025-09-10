@@ -3,24 +3,34 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   BarChart3, PieChart, Save, FolderOpen, FileText, 
   Download, Upload, Eye, EyeOff, Grid, Plus, Moon, Sun,
-  TrendingUp, Activity, Table
+  TrendingUp, Activity, Table, BarChart2
 } from 'lucide-react';
 import { DarkModeBarChart, DarkModeDonutChart, DEFAULT_COLORS } from './DarkModeCharts';
 import { RechartsLineChart, RechartsAreaChart } from './RechartsComponents';
 import { ShadcnTable } from './ShadcnTable';
+import { ShadcnComboChart } from './ShadcnComboChart';
 import EnhancedChartCustomizer from './EnhancedChartCustomizer';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  timestamp: string;
+  resolved: boolean;
+  replies?: Comment[];
+}
+
 interface Chart {
   id: string;
-  type: 'bar' | 'donut' | 'line' | 'area' | 'table';
+  type: 'bar' | 'donut' | 'line' | 'area' | 'table' | 'combo';
   title: string;
   x: number;
   y: number;
   width: number;
   height: number;
-  data: { name: string; value: number; color: string }[] | {
+  data: { name: string; value: number; color: string }[] | { name: string; barValue: number; lineValue: number; barColor?: string; lineColor?: string }[] | {
     columns: Array<{id: string; name: string; width: number; type: 'text' | 'number' | 'date' | 'email' | 'url'; sortable: boolean; align: 'left' | 'center' | 'right'}>;
     rows: Array<{id: string; cells: Record<string, {id: string; content: string; type: 'text' | 'number' | 'date' | 'email' | 'url'}>}>;
     showHeader: boolean;
@@ -32,6 +42,7 @@ interface Chart {
   titleColor: string;
   titleSize: number;
   titleWeight: string;
+  comments: Comment[];
 }
 
 const CHART_TEMPLATES = [
@@ -39,6 +50,7 @@ const CHART_TEMPLATES = [
     type: 'bar' as const,
     name: 'Bar Chart',
     icon: BarChart3,
+    category: 'charts',
     defaultData: [
       { name: 'Q1', value: 85, color: DEFAULT_COLORS[0] },
       { name: 'Q2', value: 92, color: DEFAULT_COLORS[1] },
@@ -50,6 +62,7 @@ const CHART_TEMPLATES = [
     type: 'donut' as const,
     name: 'Donut Chart', 
     icon: PieChart,
+    category: 'charts',
     defaultData: [
       { name: 'Desktop', value: 45, color: DEFAULT_COLORS[0] },
       { name: 'Mobile', value: 30, color: DEFAULT_COLORS[1] },
@@ -61,6 +74,7 @@ const CHART_TEMPLATES = [
     type: 'line' as const,
     name: 'Line Chart',
     icon: TrendingUp,
+    category: 'charts',
     defaultData: [
       { name: 'Jan', value: 65, color: DEFAULT_COLORS[0] },
       { name: 'Feb', value: 78, color: DEFAULT_COLORS[0] },
@@ -74,6 +88,7 @@ const CHART_TEMPLATES = [
     type: 'area' as const,
     name: 'Area Chart',
     icon: Activity,
+    category: 'charts',
     defaultData: [
       { name: 'Week 1', value: 45, color: DEFAULT_COLORS[1] },
       { name: 'Week 2', value: 52, color: DEFAULT_COLORS[1] },
@@ -84,9 +99,22 @@ const CHART_TEMPLATES = [
     ]
   },
   {
+    type: 'combo' as const,
+    name: 'Combo Chart',
+    icon: BarChart2,
+    category: 'charts',
+    defaultData: [
+      { name: 'Q1', barValue: 120, lineValue: 15, barColor: DEFAULT_COLORS[0], lineColor: DEFAULT_COLORS[2] },
+      { name: 'Q2', barValue: 180, lineValue: 22, barColor: DEFAULT_COLORS[0], lineColor: DEFAULT_COLORS[2] },
+      { name: 'Q3', barValue: 150, lineValue: 18, barColor: DEFAULT_COLORS[0], lineColor: DEFAULT_COLORS[2] },
+      { name: 'Q4', barValue: 200, lineValue: 28, barColor: DEFAULT_COLORS[0], lineColor: DEFAULT_COLORS[2] }
+    ]
+  },
+  {
     type: 'table' as const,
     name: 'Data Table',
     icon: Table,
+    category: 'components',
     defaultData: {
       columns: [
         { id: 'col-1', name: 'Name', width: 150, type: 'text' as const, sortable: true, align: 'left' as const },
@@ -132,6 +160,10 @@ const CHART_TEMPLATES = [
   }
 ];
 
+// Helper functions to filter templates by category
+const getChartTemplates = () => CHART_TEMPLATES.filter(template => template.category === 'charts');
+const getComponentTemplates = () => CHART_TEMPLATES.filter(template => template.category === 'components');
+
 export default function UltimateWireframeBuilder() {
   const [charts, setCharts] = useState<Chart[]>([]);
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
@@ -141,6 +173,7 @@ export default function UltimateWireframeBuilder() {
   const [isSaving, setIsSaving] = useState(false);
   const [draggedChart, setDraggedChart] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [activeTab, setActiveTab] = useState<'charts' | 'components'>('charts');
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const addChart = (template: typeof CHART_TEMPLATES[0]) => {
@@ -155,6 +188,8 @@ export default function UltimateWireframeBuilder() {
           return { width: 450, height: 280 };
         case 'area':
           return { width: 450, height: 280 };
+        case 'combo':
+          return { width: 500, height: 350 };
         case 'table':
           return { width: 600, height: 400 };
         default:
@@ -177,7 +212,8 @@ export default function UltimateWireframeBuilder() {
         : JSON.parse(JSON.stringify(template.defaultData)),
       titleColor: isDarkMode ? '#F3F4F6' : '#1F2937',
       titleSize: 16,
-      titleWeight: 'medium'
+      titleWeight: 'medium',
+      comments: []
     };
     setCharts(prev => [...prev, newChart]);
     setSelectedChart(newChart.id);
@@ -194,6 +230,76 @@ export default function UltimateWireframeBuilder() {
     if (selectedChart === id) {
       setSelectedChart(null);
     }
+  };
+
+  // Comment management functions
+  const addComment = (chartId: string, content: string, author: string = 'Reviewer') => {
+    const newComment: Comment = {
+      id: `comment-${Date.now()}`,
+      author,
+      content,
+      timestamp: new Date().toISOString(),
+      resolved: false,
+      replies: []
+    };
+
+    setCharts(prev => prev.map(chart => 
+      chart.id === chartId 
+        ? { ...chart, comments: [...chart.comments, newComment] }
+        : chart
+    ));
+  };
+
+  const resolveComment = (chartId: string, commentId: string) => {
+    setCharts(prev => prev.map(chart => 
+      chart.id === chartId 
+        ? {
+            ...chart, 
+            comments: chart.comments.map(comment => 
+              comment.id === commentId 
+                ? { ...comment, resolved: !comment.resolved }
+                : comment
+            )
+          }
+        : chart
+    ));
+  };
+
+  const deleteComment = (chartId: string, commentId: string) => {
+    setCharts(prev => prev.map(chart => 
+      chart.id === chartId 
+        ? {
+            ...chart, 
+            comments: chart.comments.filter(comment => comment.id !== commentId)
+          }
+        : chart
+    ));
+  };
+
+  const addReply = (chartId: string, commentId: string, content: string, author: string = 'Designer') => {
+    const newReply: Comment = {
+      id: `reply-${Date.now()}`,
+      author,
+      content,
+      timestamp: new Date().toISOString(),
+      resolved: false
+    };
+
+    setCharts(prev => prev.map(chart => 
+      chart.id === chartId 
+        ? {
+            ...chart, 
+            comments: chart.comments.map(comment => 
+              comment.id === commentId 
+                ? { 
+                    ...comment, 
+                    replies: [...(comment.replies || []), newReply] 
+                  }
+                : comment
+            )
+          }
+        : chart
+    ));
   };
 
   const handleMouseDown = (e: React.MouseEvent, chartId: string) => {
@@ -480,12 +586,12 @@ export default function UltimateWireframeBuilder() {
 
   return (
     <div className={`h-screen ${bgClass} flex`}>
-      {/* Sidebar - Chart Library */}
+      {/* Sidebar - Widget Library */}
       <div className={`w-80 ${sidebarBgClass} border-r ${borderClass} flex flex-col`}>
         {/* Header */}
         <div className={`p-6 border-b ${borderClass}`}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-xl font-semibold ${textClass}`}>Chart Library</h2>
+            <h2 className={`text-xl font-semibold ${textClass}`}>Widget Library</h2>
             <button
               onClick={toggleTheme}
               className={`p-2 rounded-lg transition-colors ${
@@ -498,21 +604,75 @@ export default function UltimateWireframeBuilder() {
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
           </div>
+          
+          {/* Professional Tab Navigation */}
+          <div className={`flex rounded-lg p-1 mb-4 relative overflow-hidden ${
+            isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
+          }`}>
+            {/* Animated tab indicator */}
+            <div 
+              className={`absolute top-1 bottom-1 transition-all duration-300 ease-out rounded-md ${
+                isDarkMode ? 'bg-blue-600' : 'bg-white border border-blue-200'
+              }`}
+              style={{
+                width: '50%',
+                left: activeTab === 'charts' ? '0%' : '50%',
+                transform: 'translateX(4px)',
+                right: activeTab === 'charts' ? '50%' : '0%'
+              }}
+            />
+            
+            <button
+              onClick={() => setActiveTab('charts')}
+              className={`relative z-10 flex-1 px-4 py-2 text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                activeTab === 'charts'
+                  ? isDarkMode
+                    ? 'text-white'
+                    : 'text-blue-600'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-200'
+                    : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              Charts
+            </button>
+            <button
+              onClick={() => setActiveTab('components')}
+              className={`relative z-10 flex-1 px-4 py-2 text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                activeTab === 'components'
+                  ? isDarkMode
+                    ? 'text-white'
+                    : 'text-blue-600'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-200'
+                    : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Table className="w-4 h-4" />
+              Components
+            </button>
+          </div>
+          
           <p className={`text-sm ${textSecondaryClass}`}>
-            Drag charts to the canvas to start building your wireframe
+            {activeTab === 'charts' 
+              ? 'Drag charts to the canvas to visualize your data'
+              : 'Drag components to build your interface'
+            }
           </p>
         </div>
 
-        {/* Chart Templates */}
-        <div className="flex-1 p-6">
+        {/* Widget Templates */}
+        <div className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-300px)]">
           <div className="grid grid-cols-2 gap-3">
-            {CHART_TEMPLATES.map((template) => {
+            {(activeTab === 'charts' ? getChartTemplates() : getComponentTemplates()).map((template) => {
               const IconComponent = template.icon;
               const colors = {
                 bar: 'blue',
                 donut: 'purple',
                 line: 'green',
                 area: 'orange',
+                combo: 'cyan',
                 table: 'indigo'
               };
               const color = colors[template.type] || 'blue';
@@ -521,27 +681,39 @@ export default function UltimateWireframeBuilder() {
                 <button
                   key={template.type}
                   onClick={() => addChart(template)}
-                  className={`p-4 border-2 border-dashed rounded-xl transition-all duration-200 group ${
+                  className={`relative p-4 border-2 border-dashed rounded-xl transition-all duration-200 group hover:scale-105 hover:shadow-lg ${
                     isDarkMode
                       ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
                       : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
                   }`}
                 >
+                  {/* Usage count badge */}
+                  {charts.filter(c => c.type === template.type).length > 0 && (
+                    <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      isDarkMode 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-blue-500 text-white'
+                    }`}>
+                      {charts.filter(c => c.type === template.type).length}
+                    </div>
+                  )}
+                  
                   <div className="text-center space-y-3">
-                    <div className={`mx-auto w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                    <div className={`mx-auto w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 ${
                       isDarkMode
                         ? `bg-${color}-900/20 group-hover:bg-${color}-900/30`
                         : `bg-${color}-100 group-hover:bg-${color}-200`
                     }`}>
-                      <IconComponent className={`w-6 h-6 text-${color}-500`} />
+                      <IconComponent className={`w-6 h-6 text-${color}-500 group-hover:scale-110 transition-transform`} />
                     </div>
                     <div>
-                      <h3 className={`font-medium text-sm ${textClass}`}>{template.name}</h3>
+                      <h3 className={`font-medium text-sm ${textClass} group-hover:text-${color}-600 transition-colors`}>{template.name}</h3>
                       <p className={`text-xs ${textSecondaryClass} mt-1`}>
                         {template.type === 'bar' && 'Compare values'}
                         {template.type === 'donut' && 'Show proportions'}
                         {template.type === 'line' && 'Track trends'}
                         {template.type === 'area' && 'Filled trends'}
+                        {template.type === 'combo' && 'Bar + Line combo'}
                         {template.type === 'table' && 'Structured data'}
                       </p>
                     </div>
@@ -551,22 +723,51 @@ export default function UltimateWireframeBuilder() {
             })}
           </div>
           
-          {/* Chart Info */}
+          {/* Widget Summary */}
           {charts.length > 0 && (
             <div className={`mt-6 p-4 rounded-xl border ${
               isDarkMode ? 'border-gray-600 bg-gray-800/50' : 'border-gray-200 bg-gray-50'
             }`}>
-              <h4 className={`font-medium mb-2 ${textClass}`}>Chart Summary</h4>
+              <h4 className={`font-medium mb-2 ${textClass}`}>
+                {activeTab === 'charts' ? 'Chart Summary' : 'Component Summary'}
+              </h4>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                {['bar', 'donut', 'line', 'area'].map(type => {
-                  const count = charts.filter(c => c.type === type).length;
-                  return count > 0 ? (
-                    <div key={type} className={`flex justify-between ${textSecondaryClass}`}>
-                      <span className="capitalize">{type}:</span>
-                      <span>{count}</span>
-                    </div>
-                  ) : null;
-                })}
+                {activeTab === 'charts' ? (
+                  // Chart counts
+                  ['bar', 'donut', 'line', 'area', 'combo'].map(type => {
+                    const count = charts.filter(c => c.type === type).length;
+                    return count > 0 ? (
+                      <div key={type} className={`flex justify-between ${textSecondaryClass}`}>
+                        <span className="capitalize">{type}:</span>
+                        <span>{count}</span>
+                      </div>
+                    ) : null;
+                  })
+                ) : (
+                  // Component counts
+                  ['table'].map(type => {
+                    const count = charts.filter(c => c.type === type).length;
+                    return count > 0 ? (
+                      <div key={type} className={`flex justify-between ${textSecondaryClass}`}>
+                        <span className="capitalize">{type}:</span>
+                        <span>{count}</span>
+                      </div>
+                    ) : null;
+                  })
+                )}
+              </div>
+              
+              {/* Total count with context */}
+              <div className={`mt-3 pt-3 border-t ${
+                isDarkMode ? 'border-gray-600' : 'border-gray-200'
+              }`}>
+                <div className={`flex justify-between font-medium ${textClass}`}>
+                  <span>Total {activeTab}:</span>
+                  <span>{activeTab === 'charts' 
+                    ? charts.filter(c => ['bar', 'donut', 'line', 'area', 'combo'].includes(c.type)).length
+                    : charts.filter(c => c.type === 'table').length
+                  }</span>
+                </div>
               </div>
             </div>
           )}
@@ -575,7 +776,10 @@ export default function UltimateWireframeBuilder() {
         {/* Footer */}
         <div className={`p-6 border-t ${borderClass}`}>
           <div className={`text-sm text-center ${textSecondaryClass}`}>
-            {charts.length} chart{charts.length !== 1 ? 's' : ''} added
+            {activeTab === 'charts' 
+              ? `${charts.filter(c => ['bar', 'donut', 'line', 'area', 'combo'].includes(c.type)).length} chart${charts.filter(c => ['bar', 'donut', 'line', 'area', 'combo'].includes(c.type)).length !== 1 ? 's' : ''} added`
+              : `${charts.filter(c => c.type === 'table').length} component${charts.filter(c => c.type === 'table').length !== 1 ? 's' : ''} added`
+            }
           </div>
         </div>
       </div>
@@ -741,22 +945,56 @@ export default function UltimateWireframeBuilder() {
               <div
                 key={chart.id}
                 onMouseDown={(e) => handleMouseDown(e, chart.id)}
-                className={`transition-opacity duration-150 ${isBeingDragged ? 'opacity-75 z-50' : 'z-10'}`}
+                className={`relative transition-opacity duration-150 ${isBeingDragged ? 'opacity-75 z-50' : 'z-10'}`}
                 style={{ 
                   cursor: isPreviewMode ? 'default' : draggedChart === chart.id ? 'grabbing' : 'grab'
                 }}
               >
-                {chart.type === 'bar' && Array.isArray(chart.data) ? (
-                  <DarkModeBarChart {...commonProps} type="bar" data={chart.data} />
-                ) : chart.type === 'donut' && Array.isArray(chart.data) ? (
-                  <DarkModeDonutChart {...commonProps} type="donut" data={chart.data} />
-                ) : chart.type === 'line' && Array.isArray(chart.data) ? (
-                  <RechartsLineChart {...commonProps} type="line" data={chart.data} />
-                ) : chart.type === 'area' && Array.isArray(chart.data) ? (
-                  <RechartsAreaChart {...commonProps} type="area" data={chart.data} />
+                {/* Comment Indicator */}
+                {chart.comments.length > 0 && (
+                  <div 
+                    className="absolute -top-2 -right-2 z-20"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      chart.comments.some(c => !c.resolved) 
+                        ? 'bg-orange-500 text-white' 
+                        : 'bg-green-500 text-white'
+                    }`}>
+                      {chart.comments.length}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Chart Component */}
+                {chart.type === 'bar' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                  <DarkModeBarChart {...commonProps} type="bar" data={chart.data as { name: string; value: number; color: string }[]} />
+                ) : chart.type === 'donut' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                  <DarkModeDonutChart {...commonProps} type="donut" data={chart.data as { name: string; value: number; color: string }[]} />
+                ) : chart.type === 'line' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                  <RechartsLineChart {...commonProps} type="line" data={chart.data as { name: string; value: number; color: string }[]} />
+                ) : chart.type === 'area' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                  <RechartsAreaChart {...commonProps} type="area" data={chart.data as { name: string; value: number; color: string }[]} />
+                ) : chart.type === 'combo' && Array.isArray(chart.data) && chart.data.length > 0 && 'barValue' in chart.data[0] ? (
+                  <ShadcnComboChart {...commonProps} type="combo" data={chart.data as { name: string; barValue: number; lineValue: number; barColor?: string; lineColor?: string }[]} />
                 ) : chart.type === 'table' && !Array.isArray(chart.data) ? (
                   <ShadcnTable {...commonProps} type="table" data={chart.data} />
-                ) : null}
+                ) : (
+                  // Fallback for debugging
+                  <div 
+                    className="absolute bg-red-100 border-2 border-red-500 p-4 rounded-lg"
+                    style={{ left: chart.x, top: chart.y, width: chart.width, height: chart.height }}
+                  >
+                    <div className="text-red-600 font-bold">Debug: Chart type: {chart.type}</div>
+                    <div className="text-red-600">Data type: {Array.isArray(chart.data) ? 'Array' : 'Object'}</div>
+                    {Array.isArray(chart.data) && (
+                      <div className="text-red-600">Data length: {chart.data.length}</div>
+                    )}
+                    {Array.isArray(chart.data) && chart.data.length > 0 && (
+                      <div className="text-red-600">First item keys: {Object.keys(chart.data[0]).join(', ')}</div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -811,6 +1049,10 @@ export default function UltimateWireframeBuilder() {
           onUpdateChart={updateChart}
           isDarkMode={isDarkMode}
           onToggleTheme={toggleTheme}
+          onAddComment={addComment}
+          onResolveComment={resolveComment}
+          onDeleteComment={deleteComment}
+          onAddReply={addReply}
         />
       </div>
     </div>

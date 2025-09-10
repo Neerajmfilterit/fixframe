@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { 
   Palette, Type, BarChart3, PieChart, RefreshCw, Plus, Minus, 
-  Move, Maximize2, FileText, Database, Moon, Sun 
+  Move, Maximize2, FileText, Database, Moon, Sun, MessageSquare,
+  Send, Check, X, Reply, Trash2, Clock
 } from 'lucide-react';
 
 interface ChartCustomizerProps {
@@ -10,6 +11,10 @@ interface ChartCustomizerProps {
   onUpdateChart: (id: string, updates: any) => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
+  onAddComment?: (chartId: string, content: string, author?: string) => void;
+  onResolveComment?: (chartId: string, commentId: string) => void;
+  onDeleteComment?: (chartId: string, commentId: string) => void;
+  onAddReply?: (chartId: string, commentId: string, content: string, author?: string) => void;
 }
 
 const COLOR_PRESETS = [
@@ -35,16 +40,24 @@ export default function EnhancedChartCustomizer({
   selectedChart, 
   onUpdateChart, 
   isDarkMode, 
-  onToggleTheme 
+  onToggleTheme,
+  onAddComment,
+  onResolveComment,
+  onDeleteComment,
+  onAddReply
 }: ChartCustomizerProps) {
-  const [activeTab, setActiveTab] = useState<'size' | 'colors' | 'typography' | 'data'>('size');
+  const [activeTab, setActiveTab] = useState<'size' | 'colors' | 'typography' | 'data' | 'comments'>('size');
+  const [newComment, setNewComment] = useState('');
+  const [newAuthor, setNewAuthor] = useState('Reviewer');
+  const [replyContent, setReplyContent] = useState<{[key: string]: string}>({});
+  const [replyAuthor, setReplyAuthor] = useState<{[key: string]: string}>({});
 
   const bgClass = isDarkMode ? 'bg-gray-900' : 'bg-white';
   const borderClass = isDarkMode ? 'border-gray-700' : 'border-gray-200';
   const textClass = isDarkMode ? 'text-gray-100' : 'text-gray-900';
   const textSecondaryClass = isDarkMode ? 'text-gray-400' : 'text-gray-500';
   const inputClass = isDarkMode 
-    ? 'bg-gray-800 border-gray-600 text-gray-100 focus:border-blue-400' 
+    ? 'bg-gray-800 border-gray-600 text-gray-100 focus:border-blue-500' 
     : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500';
 
   if (!selectedChart) {
@@ -113,10 +126,11 @@ export default function EnhancedChartCustomizer({
     { id: 'colors', label: 'Colors', icon: Palette },
     { id: 'typography', label: 'Text', icon: Type },
     { id: 'data', label: 'Data', icon: Database },
+    { id: 'comments', label: 'Comments', icon: MessageSquare },
   ];
 
   return (
-    <div className={`w-80 ${bgClass} border-l ${borderClass} flex flex-col`}>
+    <div className={`w-80 h-screen ${bgClass} border-l ${borderClass} flex flex-col`}>
       {/* Header */}
       <div className={`p-4 border-b ${borderClass}`}>
         {/* Theme Toggle */}
@@ -141,6 +155,10 @@ export default function EnhancedChartCustomizer({
             <BarChart3 className="w-8 h-8 text-green-500" />
           ) : selectedChart.type === 'area' ? (
             <BarChart3 className="w-8 h-8 text-orange-500" />
+          ) : selectedChart.type === 'combo' ? (
+            <BarChart2 className="w-8 h-8 text-indigo-500" />
+          ) : selectedChart.type === 'table' ? (
+            <FileText className="w-8 h-8 text-gray-500" />
           ) : (
             <FileText className="w-8 h-8 text-indigo-500" />
           )}
@@ -151,7 +169,7 @@ export default function EnhancedChartCustomizer({
         </div>
 
         {/* Tabs */}
-        <div className={`grid grid-cols-4 gap-1 p-1 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+        <div className={`grid grid-cols-5 gap-1 p-1 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
           {tabs.map((tab) => {
             const IconComponent = tab.icon;
             return (
@@ -177,7 +195,8 @@ export default function EnhancedChartCustomizer({
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-hidden">
+        <div className={`${activeTab === 'data' || activeTab === 'comments' ? 'h-full overflow-hidden' : 'h-full overflow-y-auto p-4'}`}>
         {activeTab === 'size' && (
           <div className="space-y-6">
             {/* Quick Size Presets */}
@@ -412,11 +431,11 @@ export default function EnhancedChartCustomizer({
         )}
 
         {activeTab === 'data' && (
-          <div className="space-y-6">
+          <div className="h-full flex flex-col">
             {/* Data Points Editor */}
             {Array.isArray(selectedChart.data) ? (
-              <div>
-                <div className="flex items-center justify-between mb-3">
+              <div className="h-full flex flex-col">
+                <div className="flex items-center justify-between mb-3 p-4 pb-0 flex-shrink-0">
                   <label className={`block text-sm font-medium ${textClass}`}>
                     Data Points
                   </label>
@@ -433,7 +452,8 @@ export default function EnhancedChartCustomizer({
                   </button>
                 </div>
                 
-                <div className="space-y-3">
+                <div className="flex-1 overflow-y-auto px-4 pb-4">
+                  <div className="space-y-3">
                   {selectedChart.data.map((item: any, index: number) => (
                     <div key={index} className={`p-3 border rounded-lg ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}>
                       <div className="flex items-center justify-between mb-3">
@@ -489,10 +509,11 @@ export default function EnhancedChartCustomizer({
                       </div>
                     </div>
                   ))}
+                  </div>
                 </div>
 
-                {/* Quick Actions */}
-                <div className={`pt-4 border-t ${borderClass}`}>
+                {/* Quick Actions - Fixed at bottom */}
+                <div className={`p-4 border-t ${borderClass} flex-shrink-0`}>
                   <button
                     onClick={() => {
                       if (!Array.isArray(selectedChart.data)) return;
@@ -514,7 +535,7 @@ export default function EnhancedChartCustomizer({
                 </div>
               </div>
             ) : (
-              <div className={`p-6 text-center ${textSecondaryClass}`}>
+              <div className={`p-6 text-center ${textSecondaryClass} h-full flex flex-col justify-center`}>
                 <Database className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <h3 className={`text-lg font-medium mb-2 ${textClass}`}>Unsupported Data Type</h3>
                 <p>This component has a data structure that cannot be edited in the customizer.</p>
@@ -523,6 +544,233 @@ export default function EnhancedChartCustomizer({
             )}
           </div>
         )}
+
+        {activeTab === 'comments' && (
+          <div className="h-full flex flex-col">
+            {/* Comments Header */}
+            <div className="p-4 pb-0 flex-shrink-0">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className={`w-5 h-5 ${textClass}`} />
+                  <h3 className={`font-medium ${textClass}`}>Comments & Reviews</h3>
+                </div>
+                <div className={`text-xs px-2 py-1 rounded-full ${
+                  selectedChart.comments?.length > 0 
+                    ? selectedChart.comments.some((c: any) => !c.resolved)
+                      ? 'bg-orange-100 text-orange-600'
+                      : 'bg-green-100 text-green-600'
+                    : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {selectedChart.comments?.length || 0} comments
+                </div>
+              </div>
+
+              {/* Add New Comment */}
+              <div className={`border rounded-lg p-3 mb-4 ${borderClass}`}>
+                <div className="space-y-3">
+                  <div>
+                    <label className={`block text-xs ${textSecondaryClass} mb-1`}>Your Name</label>
+                    <input
+                      type="text"
+                      value={newAuthor}
+                      onChange={(e) => setNewAuthor(e.target.value)}
+                      className={`w-full px-2 py-1 text-sm border rounded transition-colors ${inputClass}`}
+                      placeholder="Reviewer"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs ${textSecondaryClass} mb-1`}>Comment</label>
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className={`w-full px-2 py-2 text-sm border rounded transition-colors resize-none ${inputClass}`}
+                      rows={3}
+                      placeholder="Add your feedback or review comment..."
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (newComment.trim() && onAddComment) {
+                        onAddComment(selectedChart.id, newComment.trim(), newAuthor.trim() || 'Reviewer');
+                        setNewComment('');
+                      }
+                    }}
+                    disabled={!newComment.trim()}
+                    className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                      newComment.trim()
+                        ? isDarkMode 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    <Send className="w-4 h-4" />
+                    Add Comment
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Comments List */}
+            <div className="flex-1 overflow-y-auto px-4 pb-4">
+              {selectedChart.comments && selectedChart.comments.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedChart.comments.map((comment: any) => (
+                    <div key={comment.id} className={`border rounded-lg p-4 ${borderClass} ${
+                      comment.resolved ? 'opacity-75' : ''
+                    }`}>
+                      {/* Comment Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                            comment.author === 'Reviewer' 
+                              ? 'bg-orange-100 text-orange-600' 
+                              : 'bg-blue-100 text-blue-600'
+                          }`}>
+                            {comment.author.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className={`font-medium text-sm ${textClass}`}>{comment.author}</div>
+                            <div className={`text-xs ${textSecondaryClass} flex items-center gap-1`}>
+                              <Clock className="w-3 h-3" />
+                              {new Date(comment.timestamp).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {onResolveComment && (
+                            <button
+                              onClick={() => onResolveComment(selectedChart.id, comment.id)}
+                              className={`p-1 rounded transition-colors ${
+                                comment.resolved
+                                  ? 'text-green-500 hover:text-green-600'
+                                  : isDarkMode
+                                    ? 'text-gray-400 hover:text-green-400'
+                                    : 'text-gray-500 hover:text-green-500'
+                              }`}
+                              title={comment.resolved ? 'Mark as unresolved' : 'Mark as resolved'}
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                          {onDeleteComment && (
+                            <button
+                              onClick={() => onDeleteComment(selectedChart.id, comment.id)}
+                              className={`p-1 rounded transition-colors ${
+                                isDarkMode 
+                                  ? 'text-gray-400 hover:text-red-400' 
+                                  : 'text-gray-500 hover:text-red-500'
+                              }`}
+                              title="Delete comment"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Comment Content */}
+                      <div className={`text-sm ${textClass} mb-3 pl-10`}>
+                        {comment.content}
+                      </div>
+
+                      {/* Comment Status */}
+                      {comment.resolved && (
+                        <div className="flex items-center gap-1 text-xs text-green-600 pl-10">
+                          <Check className="w-3 h-3" />
+                          Resolved
+                        </div>
+                      )}
+
+                      {/* Replies */}
+                      {comment.replies && comment.replies.length > 0 && (
+                        <div className="pl-10 mt-3 space-y-2">
+                          {comment.replies.map((reply: any) => (
+                            <div key={reply.id} className={`border-l-2 pl-3 py-2 ${
+                              reply.author === 'Designer' ? 'border-blue-300' : 'border-gray-300'
+                            }`}>
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                  reply.author === 'Designer' 
+                                    ? 'bg-blue-100 text-blue-600' 
+                                    : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {reply.author.charAt(0).toUpperCase()}
+                                </div>
+                                <span className={`text-xs font-medium ${textClass}`}>{reply.author}</span>
+                                <span className={`text-xs ${textSecondaryClass}`}>
+                                  {new Date(reply.timestamp).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className={`text-sm ${textClass}`}>{reply.content}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Reply Form */}
+                      {!comment.resolved && onAddReply && (
+                        <div className="pl-10 mt-3">
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={replyAuthor[comment.id] || 'Designer'}
+                                onChange={(e) => setReplyAuthor({...replyAuthor, [comment.id]: e.target.value})}
+                                className={`flex-1 px-2 py-1 text-xs border rounded transition-colors ${inputClass}`}
+                                placeholder="Your name"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={replyContent[comment.id] || ''}
+                                onChange={(e) => setReplyContent({...replyContent, [comment.id]: e.target.value})}
+                                className={`flex-1 px-2 py-1 text-sm border rounded transition-colors ${inputClass}`}
+                                placeholder="Reply to this comment..."
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter' && replyContent[comment.id]?.trim()) {
+                                    onAddReply(selectedChart.id, comment.id, replyContent[comment.id].trim(), replyAuthor[comment.id] || 'Designer');
+                                    setReplyContent({...replyContent, [comment.id]: ''});
+                                  }
+                                }}
+                              />
+                              <button
+                                onClick={() => {
+                                  if (replyContent[comment.id]?.trim()) {
+                                    onAddReply(selectedChart.id, comment.id, replyContent[comment.id].trim(), replyAuthor[comment.id] || 'Designer');
+                                    setReplyContent({...replyContent, [comment.id]: ''});
+                                  }
+                                }}
+                                disabled={!replyContent[comment.id]?.trim()}
+                                className={`px-3 py-1 rounded text-sm transition-colors ${
+                                  replyContent[comment.id]?.trim()
+                                    ? isDarkMode 
+                                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                              >
+                                <Reply className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={`text-center py-8 ${textSecondaryClass}`}>
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <h3 className={`text-lg font-medium mb-2 ${textClass}`}>No Comments Yet</h3>
+                  <p className="text-sm">Add the first review comment for this chart.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        </div>
       </div>
     </div>
   );
