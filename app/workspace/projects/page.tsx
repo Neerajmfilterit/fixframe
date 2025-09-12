@@ -102,22 +102,22 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="p-6 text-blue-100">
+    <div className="px-6 shadow-lg bg-zinc-400/20 rounded-2xl  min-w-5xl text-blue-100">
       {/* Back Button */}
-      <div className="mb-6 ">
+      {/* <div className="mb-6 ">
         <Link
           href="/workspace"
           className={
-            `inline-flex items-center px-4 py-2 backdrop-blur-xl ring-1 rounded-lg transition-all duration-300 hover:scale-105
-             bg-white/10 ring-white/10 text-black hover:bg-emerald-300  bg-emerald-500 rounded-full`
+            `inline-flex items-center px-1 py-2 backdrop-blur-xl ring-1 rounded-lg transition-all duration-300 hover:scale-105
+             bg-emerald-500 ring-white/10 text-black hover:bg-emerald-300  bg-emerald-500 rounded-full`
           }
         >
-          <ArrowLeft className="h-4 w-4 mr-2 text-white  " />
+          <ArrowLeft className="h-4 w-4 mr-2 text-white  " /> */}
           {/* Back  */}
-        </Link>
-      </div>
+        {/* </Link>
+      </div> */}
 
-      {/* Header */}
+      {/* Header
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
@@ -131,11 +131,11 @@ export default function ProjectsPage() {
             <Plus className="h-4 w-4 mr-2" />
             New Project
           </Link> */}
-        </div>
-      </div>
+        {/* </div>
+      </div> */}
 
       {/* Filters */}
-      <div className="bg-white/10 backdrop-blur-xl ring-1 ring-white/10 rounded-lg p-6 mb-6 border-2 border-blue-200 shadow-lg">
+      {/* <div className="bg-white/10 backdrop-blur-xl ring-1 ring-white/10 rounded-lg p-6 mb-6 border-2 border-blue-200 shadow-lg">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 ">
             <div className="relative border-2 rounded-lg border-black ">
@@ -163,7 +163,7 @@ export default function ProjectsPage() {
             </select>
           </div>
         </div>
-      </div>
+      </div> */} 
 
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (

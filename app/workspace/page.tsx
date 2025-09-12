@@ -17,6 +17,13 @@ import {
   ArrowLeft,
   Play
 } from "lucide-react"
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import ProjectsPage from "./projects/page";
 
 interface Project {
   _id: string
@@ -227,7 +234,7 @@ export default function WorkspaceDashboard() {
         
         
         {/* Animated Tagline */}
-        <div className="mt-10 text-center">
+        <div className="mt-3 text-center">
           <div className="inline-block">
             <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
               {displayedText}
@@ -243,13 +250,14 @@ export default function WorkspaceDashboard() {
       
 
       {/* Quick Actions */}
-      <div className="relative z-10 mb-12">
-        <div className="grid grid-col md:grid-cols-2 gap-2 ">
+      <div className="relative z-10 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ">
+          <div className="w-full">
           <button
             onClick={() => setShowCreatePopup(true)}
-            className="group relative p-8 bg-emerald-500/25 to-teal-600/25 backdrop-blur-xl ring-1 ring-emerald-400/40 rounded-3xl hover:from-emerald-500/35 hover:to-teal-600/35 transition-all duration-300  hover:shadow-2xl hover:shadow-emerald-500/30 "
+            className="group w-full relative  p-8 bg-emerald-500/25 to-teal-600/25 backdrop-blur-xl ring-1 ring-emerald-400/40 rounded-3xl hover:from-emerald-500/35 hover:to-teal-600/35 transition-all duration-300  hover:shadow-2xl hover:shadow-emerald-500/30 "
           >
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center  space-x-4">
               <div className="p-4 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl shadow-lg ">
                 <Plus className="h-8 w-8 text-white" />
               </div>
@@ -261,7 +269,8 @@ export default function WorkspaceDashboard() {
             {/* <ArrowRight className="absolute top-4 right-4 h-5 w-5 text-emerald-300 group-hover:text-white group-hover:translate-x-1 transition-all" /> */}
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-teal-500/10 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </button>
-          <Link
+          </div>
+          {/* <Link
             href="/workspace/projects"
             className="group relative p-8 bg-gradient-to-br from-rose-500/25 to-pink-600/25 backdrop-blur-xl ring-1 ring-rose-400/40 rounded-3xl hover:from-rose-500/35 hover:to-pink-600/35 transition-all duration-300  hover:shadow-2xl hover:shadow-rose-500/30 "
           >
@@ -275,8 +284,30 @@ export default function WorkspaceDashboard() {
               </div>
             </div>
             {/* <ArrowRight className="absolute top-4 right-4 h-5 w-5 text-rose-300 group-hover:text-white group-hover:translate-x-1 transition-all" /> */}
-            <div className="absolute inset-0 bg-gradient-to-r from-rose-400/10 to-pink-500/10 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </Link>
+            {/* <div className="absolute inset-0 bg-gradient-to-r from-rose-400/10 to-pink-500/10 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          </Link>  */}
+          <div className="  ">
+          <Accordion type="single" collapsible className="w-full rounded-2xl ">
+  <AccordionItem value="projects">
+    <AccordionTrigger className="p-0">
+      <div className="group  w-full relative p-8 bg-gradient-to-br from-rose-500/25 to-pink-600/25 backdrop-blur-xl ring-1 ring-rose-400/40 rounded-3xl hover:from-rose-500/35 hover:to-pink-600/35 transition-all duration-300  hover:shadow-2xl hover:shadow-rose-500/30">
+        <div className="flex  items-center">
+          <div className="p-4 bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl shadow-lg duration-300">
+            <FileText className="h-8 w-8 text-white" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-xl px-2 font-bold text-black mb-1">Browse Projects</h3>
+            <p className="text-black px-2">View all projects</p>
+          </div>
+        </div>
+      </div>
+    </AccordionTrigger>
+ <AccordionContent className="shadow-lg  p-2  rounded-lg">
+  <ProjectsPage/>
+ </AccordionContent>
+  </AccordionItem>
+</Accordion>
+          </div>
         </div>
       </div>
 
@@ -353,7 +384,7 @@ export default function WorkspaceDashboard() {
               </div>
               <button
                 onClick={() => setShowCreatePopup(false)}
-                className="p-2 text-blue-500 hover:text-white hover:text-blue-300 rounded-lg transition-colors"
+                className="p-2 text-blue-500 hover:text-blue-500/60 hover:text-blue-300 rounded-lg transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>

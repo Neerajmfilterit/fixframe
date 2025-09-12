@@ -65,7 +65,7 @@ export default function NewProjectPage() {
   return (
     <>
     <Link
-          href="/workspace/projects"
+          href="/workspace"
           className="inline-flex items-center ml-3 mt-3 rounded-lg p-2 text-sm text-white bg-emerald-500 hover:bg-emerald-300 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
@@ -92,7 +92,7 @@ export default function NewProjectPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-4 text-sm text-red-200 bg-red-500/20 border border-red-500/30 rounded-lg">
+              <div className="p-4 text-sm text-red-500 bg-red-500/20 border border-red-500/30 rounded-lg">
                 {error}
               </div>
             )}
@@ -143,7 +143,7 @@ export default function NewProjectPage() {
 
             <div className="flex items-center justify-between pt-6 border-t border-gray-200">
               <Link
-                href="/workspace/projects"
+                href="/workspace"
                 className="px-4 py-2 text-sm text-blue-700 hover:text-blue-300 transition-colors"
               >
                 Cancel
@@ -176,25 +176,25 @@ export default function NewProjectPage() {
       </Card>
 
       {/* Project Templates */}
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold text-white mb-4">Quick Start Templates</h2>
+      {/* <div className="mt-2">
+        <h2 className="text-lg font-semibold text-black mb-4">Quick Start Templates</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 border border-white/10 bg-white/5 rounded-lg hover:border-blue-300/60 hover:bg-blue-500/10 transition-colors cursor-pointer">
-            <h3 className="font-medium text-white mb-2">Dashboard Wireframe</h3>
-            <p className="text-sm text-blue-200 mb-3">Pre-configured with common dashboard components</p>
+          <div className="p-4 border  shadow-lg bg-white/5 rounded-lg hover:border-blue-300/60 hover:bg-blue-500/10 transition-colors cursor-pointer">
+            <h3 className="font-medium text-black mb-2">Dashboard Wireframe</h3>
+            <p className="text-sm text-blue-400 mb-3">Pre-configured with common dashboard components</p>
             <Button variant="outline" size="sm" className="bg-blue-700">
               Use Template
             </Button>
           </div>
-          <div className="p-4 border border-white/10 bg-white/5 rounded-lg hover:border-green-300/60 hover:bg-green-500/10 transition-colors cursor-pointer">
-            <h3 className="font-medium text-white mb-2">Mobile App Wireframe</h3>
-            <p className="text-sm text-blue-200 mb-3">Optimized for mobile app design and layout</p>
+          <div className="p-4 border  shadow-lg bg-white/5 rounded-lg hover:border-green-300/60 hover:bg-green-500/10 transition-colors cursor-pointer">
+            <h3 className="font-medium text-black mb-2">Mobile App Wireframe</h3>
+            <p className="text-sm text-blue-400 mb-3">Optimized for mobile app design and layout</p>
             <Button variant="outline" size="sm" className="bg-blue-700">
               Use Template
             </Button>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
     </>
   )
