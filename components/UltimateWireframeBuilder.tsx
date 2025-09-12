@@ -413,10 +413,10 @@ export default function UltimateWireframeBuilder({
       }
     } else {
       // Fallback to localStorage
-      const currentWireframe = localStorage.getItem('currentWireframe');
-      if (currentWireframe) {
-        try {
-          const wireframeData = JSON.parse(currentWireframe);
+    const currentWireframe = localStorage.getItem('currentWireframe');
+    if (currentWireframe) {
+      try {
+        const wireframeData = JSON.parse(currentWireframe);
           
           // Handle both old format (charts) and new format (pages)
           if (wireframeData.pages) {
@@ -434,9 +434,9 @@ export default function UltimateWireframeBuilder({
             setCurrentPageId('page-1');
           }
           
-          if (wireframeData.projectName) {
-            setProjectName(wireframeData.projectName);
-          }
+        if (wireframeData.projectName) {
+          setProjectName(wireframeData.projectName);
+        }
           // Always default to dark mode, ignore saved preference
           setIsDarkMode(true);
           
@@ -446,10 +446,10 @@ export default function UltimateWireframeBuilder({
             isDarkMode: true
           };
           localStorage.setItem('currentWireframe', JSON.stringify(updatedWireframeData));
-        } catch (error) {
-          console.error('Error loading project data:', error);
-        }
+      } catch (error) {
+        console.error('Error loading project data:', error);
       }
+    }
     }
   }, [initialProject]);
 
@@ -546,7 +546,7 @@ export default function UltimateWireframeBuilder({
     setPages(prev => prev.map(page => ({
       ...page,
       charts: page.charts.map(chart => 
-        chart.id === id ? { ...chart, ...updates } : chart
+      chart.id === id ? { ...chart, ...updates } : chart
       )
     })));
   };
@@ -575,9 +575,9 @@ export default function UltimateWireframeBuilder({
     setPages(prev => prev.map(page => ({
       ...page,
       charts: page.charts.map(chart => 
-        chart.id === chartId 
-          ? { ...chart, comments: [...chart.comments, newComment] }
-          : chart
+      chart.id === chartId 
+        ? { ...chart, comments: [...chart.comments, newComment] }
+        : chart
       )
     })));
   };
@@ -586,16 +586,16 @@ export default function UltimateWireframeBuilder({
     setPages(prev => prev.map(page => ({
       ...page,
       charts: page.charts.map(chart => 
-        chart.id === chartId 
-          ? {
-              ...chart, 
-              comments: chart.comments.map(comment => 
-                comment.id === commentId 
-                  ? { ...comment, resolved: !comment.resolved }
-                  : comment
-              )
-            }
-          : chart
+      chart.id === chartId 
+        ? {
+            ...chart, 
+            comments: chart.comments.map(comment => 
+              comment.id === commentId 
+                ? { ...comment, resolved: !comment.resolved }
+                : comment
+            )
+          }
+        : chart
       )
     })));
   };
@@ -604,12 +604,12 @@ export default function UltimateWireframeBuilder({
     setPages(prev => prev.map(page => ({
       ...page,
       charts: page.charts.map(chart => 
-        chart.id === chartId 
-          ? {
-              ...chart, 
-              comments: chart.comments.filter(comment => comment.id !== commentId)
-            }
-          : chart
+      chart.id === chartId 
+        ? {
+            ...chart, 
+            comments: chart.comments.filter(comment => comment.id !== commentId)
+          }
+        : chart
       )
     })));
   };
@@ -626,19 +626,19 @@ export default function UltimateWireframeBuilder({
     setPages(prev => prev.map(page => ({
       ...page,
       charts: page.charts.map(chart => 
-        chart.id === chartId 
-          ? {
-              ...chart, 
-              comments: chart.comments.map(comment => 
-                comment.id === commentId 
-                  ? { 
-                      ...comment, 
-                      replies: [...(comment.replies || []), newReply] 
-                    }
-                  : comment
-              )
-            }
-          : chart
+      chart.id === chartId 
+        ? {
+            ...chart, 
+            comments: chart.comments.map(comment => 
+              comment.id === commentId 
+                ? { 
+                    ...comment, 
+                    replies: [...(comment.replies || []), newReply] 
+                  }
+                : comment
+            )
+          }
+        : chart
       )
     })));
   };
@@ -783,29 +783,29 @@ export default function UltimateWireframeBuilder({
     const start = Date.now();
     
     try {
-      const wireframeData = {
-        version: '2.0',
-        timestamp: new Date().toISOString(),
-        projectName,
-        isDarkMode,
+    const wireframeData = {
+      version: '2.0',
+      timestamp: new Date().toISOString(),
+      projectName,
+      isDarkMode,
         pages: pages.map(page => ({ ...page })),
         currentPageId
-      };
+    };
 
       // Save to localStorage as backup
-      localStorage.setItem('currentWireframe', JSON.stringify(wireframeData));
-      
-      const savedWireframes = JSON.parse(localStorage.getItem('savedWireframes') || '[]');
-      const existingIndex = savedWireframes.findIndex((w: any) => w.projectName === projectName);
-      
-      if (existingIndex >= 0) {
-        savedWireframes[existingIndex] = wireframeData;
-      } else {
-        savedWireframes.push(wireframeData);
-      }
-      
-      localStorage.setItem('savedWireframes', JSON.stringify(savedWireframes));
-
+    localStorage.setItem('currentWireframe', JSON.stringify(wireframeData));
+    
+    const savedWireframes = JSON.parse(localStorage.getItem('savedWireframes') || '[]');
+    const existingIndex = savedWireframes.findIndex((w: any) => w.projectName === projectName);
+    
+    if (existingIndex >= 0) {
+      savedWireframes[existingIndex] = wireframeData;
+    } else {
+      savedWireframes.push(wireframeData);
+    }
+    
+    localStorage.setItem('savedWireframes', JSON.stringify(savedWireframes));
+    
       // Save to MongoDB if projectId is available
       if (projectId) {
         const response = await fetch(`/api/projects/${projectId}`, {
@@ -892,7 +892,7 @@ export default function UltimateWireframeBuilder({
       // Scale image to full page width and keep aspect ratio
       const imgWidth = pageWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
+      
       // Start at top of page (no vertical centering to avoid large white band)
       let position = 0;
       let heightLeft = imgHeight;
@@ -900,7 +900,7 @@ export default function UltimateWireframeBuilder({
       // First page
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
-
+      
       // Additional pages (no leading blank pages)
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
@@ -1056,7 +1056,7 @@ export default function UltimateWireframeBuilder({
           background: ${isDarkMode ? '#111827' : '#f8fafc'};
         }
       `}</style>
-      <div className={`h-screen ${bgClass} flex`}>
+    <div className={`h-screen ${bgClass} flex`}>
       {/* Sidebar - Widget Library */}
       <div className={`w-80 ${sidebarBgClass} border-r ${borderClass} flex flex-col sidebar-scrollbar`}>
         {/* Header */}
@@ -1255,8 +1255,8 @@ export default function UltimateWireframeBuilder({
             </div>
           ) : (
             /* Charts and Components */
-            <div className="grid grid-cols-2 gap-3">
-              {(activeTab === 'charts' ? getChartTemplates() : getComponentTemplates()).map((template) => {
+          <div className="grid grid-cols-2 gap-3">
+            {(activeTab === 'charts' ? getChartTemplates() : getComponentTemplates()).map((template) => {
               const IconComponent = template.icon;
               const colors = {
                 bar: 'blue',
@@ -1476,23 +1476,6 @@ export default function UltimateWireframeBuilder({
               </div>
 
 
-              <button
-                onClick={() => {
-                  if (projectId) {
-                    window.open(`/preview?project=${projectId}`, '_blank')
-                  } else {
-                    alert('Please save the project first to preview it')
-                  }
-                }}
-                className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
-                  isDarkMode
-                    ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-                    : 'bg-green-100 text-green-700 hover:bg-green-200'
-                }`}
-              >
-                <Eye className="w-4 h-4" />
-                Preview
-              </button>
             </div>
           </div>
         </div>
