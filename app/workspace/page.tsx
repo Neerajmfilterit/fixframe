@@ -342,18 +342,18 @@ export default function WorkspaceDashboard() {
 
       {/* Enhanced Create Project Popup */}
       {showCreatePopup && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl ring-1 ring-white/20 rounded-2xl p-8 w-full max-w-md shadow-2xl shadow-blue-500/25">
+        <div className="fixed inset-0 bg-white/80 shadow-lg border-2 border-grey-500 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-white/15 to-white/5  shadow-lg backdrop-blur-xl ring-1 ring-white/20 rounded-2xl p-8 w-full max-w-md shadow-2xl shadow-blue-500/25">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 {/* <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
                   <Plus className="h-5 w-5 text-white" />
                 </div> */}
-                <h3 className="text-xl font-bold text-white">Create New Project</h3>
+                <h3 className="text-xl font-bold text-black">Create New Project</h3>
               </div>
               <button
                 onClick={() => setShowCreatePopup(false)}
-                className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-blue-500 hover:text-white hover:text-blue-300 rounded-lg transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -361,27 +361,27 @@ export default function WorkspaceDashboard() {
             
             <form onSubmit={handleCreateProject} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-blue-200 mb-3">
+                <label className="block text-sm font-medium text-black mb-3">
                   Project Name
                 </label>
                 <input
                   type="text"
                   value={createForm.name}
                   onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white/10 rounded-xl text-black text-sm placeholder:text-grey-500  border-2 transition-all"
                   placeholder="My Awesome Project"
                   required
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-blue-200 mb-3">
+                <label className="block text-sm font-medium text-black mb-3">
                   Description
                 </label>
                 <textarea
                   value={createForm.description}
                   onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
+                  className="w-full px-4 py-3  rounded-xl text-black text-sm placeholder:text-grey-400  border-2 resize-none transition-all"
                   placeholder="Describe your project..."
                   rows={3}
                   required
@@ -396,7 +396,7 @@ export default function WorkspaceDashboard() {
                   onChange={(e) => setCreateForm({...createForm, isPublic: e.target.checked})}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-white/20 rounded bg-white/10"
                 />
-                <label htmlFor="isPublic" className="text-sm text-blue-200">
+                <label htmlFor="isPublic" className="text-sm text-black">
                   Make this project public
                 </label>
               </div>
@@ -405,7 +405,7 @@ export default function WorkspaceDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowCreatePopup(false)}
-                  className="px-6 py-3 text-sm text-blue-200 hover:text-white transition-colors"
+                  className="px-6 py-3 text-sm text-blue-700 hover:text-blue-300 transition-colors"
                 >
                   Cancel
                 </button>

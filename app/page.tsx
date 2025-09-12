@@ -58,8 +58,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br  bg-blue-700 flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden">
+    <div className="min-h-screen   bg-zinc-200/80 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
         <div className="absolute top-40 right-20 w-24 h-24 bg-indigo-500/30 rounded-lg rotate-45 animate-bounce"></div>
         <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-cyan-500/15 rounded-full blur-2xl"></div>
@@ -67,101 +67,89 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
         <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-l from-cyan-500/10 to-blue-500/10 rounded-full blur-3xl"></div>
+      </div> */}
+
+   <div className="min-h-screen flex items-center justify-center ">
+  <div className="w-full max-w-md p-8 rounded-2xl backdrop-blur-xl bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-900 border border-white/20 shadow-2xl">
+    <h2 className="text-2xl font-bold text-white text-center">Welcome Back</h2>
+    <p className="text-blue-200 text-center text-sm mt-1">
+      Sign in to access your projects and continue where you left off
+    </p>
+
+    <form onSubmit={handleSubmit} className="space-y-5 mt-6">
+      {/* Email */}
+      <div className="space-y-2">
+        <label htmlFor="email" className="text-sm font-medium text-blue-200">
+          Email
+        </label>
+        <input
+          id="email"
+          type="email"
+          placeholder="Enter your email"
+          className="w-full h-11 px-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-blue-300 focus:ring-2 focus:ring-blue-400/40 focus:outline-none"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
       </div>
 
-      <div className="w-full max-w-md space-y-8 relative z-10">
-        <Card className="border-blue-500/20 shadow-2xl shadow-blue-900/20 bg-white/10 backdrop-blur-xl ring-1 ring-white/10">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-xl font-semibold text-white">Sign in</CardTitle>
-            <CardDescription className="text-blue-200">
-              Enter your email and password to access your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="p-3 text-sm text-red-200 bg-red-500/20 border border-red-500/30 rounded-lg">
-                  {error}
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-blue-100">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  className="h-9 bg-white/5 border-blue-400/30 text-white placeholder:text-blue-300 focus:border-blue-400 focus:ring-blue-400/20"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-blue-100">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    className="h-9 bg-white/5 border-blue-400/30 text-white placeholder:text-blue-300 focus:border-blue-400 focus:ring-blue-400/20 pr-10"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300 hover:text-blue-200 transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    className="w-4 h-4 text-blue-500 bg-white/10 border-blue-400/30 rounded focus:ring-blue-500 focus:ring-2"
-                  />
-                  <Label htmlFor="remember" className="text-sm text-blue-200">
-                    Remember me
-                  </Label>
-                </div>
-                <Link href={"/forgot-password" as any} className="text-sm text-blue-300 hover:text-blue-200 transition-colors">
-                  Forgot password?
-                </Link>
-              </div>
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-9 font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all duration-200 disabled:opacity-50"
-              >
-                {isLoading ? "Signing in..." : "Sign in"}
-              </Button>
-            </form>
-
-            
-          </CardContent>
-        </Card>
-
-        <div className="text-center">
-          <p className="text-sm text-blue-200">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-blue-300 hover:text-blue-200 font-medium transition-colors">
-              Create one now
-            </Link>
-          </p>
+      {/* Password */}
+      <div className="space-y-2">
+        <label htmlFor="password" className="text-sm font-medium text-blue-200">
+          Password
+        </label>
+        <div className="relative">
+          <input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter your password"
+            className="w-full h-11 px-3 pr-10 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-blue-300 focus:ring-2 focus:ring-blue-400/40 focus:outline-none"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300 hover:text-blue-100 transition"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
         </div>
       </div>
+
+      {/* Remember + Forgot */}
+      <div className="flex items-center justify-between text-sm">
+        <label className="flex items-center space-x-2 text-blue-200">
+          <input type="checkbox" className="w-4 h-4 accent-blue-500" />
+          <span>Remember me</span>
+        </label>
+        <a href="/forgot-password" className="text-blue-300 hover:text-blue-200 transition-colors">
+          Forgot password?
+        </a>
+      </div>
+
+      {/* Submit */}
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="w-full h-11 rounded-xl font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-500/20 transition-all duration-200 disabled:opacity-50"
+      >
+        {isLoading ? "Signing in..." : "Sign In"}
+      </button>
+    </form>
+
+    {/* Sign up */}
+    <p className="text-center text-blue-300 text-sm mt-5">
+      Don't have an account?{" "}
+      <a href="/signup" className="text-blue-400 hover:text-blue-200 font-semibold transition-colors">
+        Create one now
+      </a>
+    </p>
+  </div>
+</div>
+
+
     </div>
   )
 }
