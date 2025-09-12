@@ -63,25 +63,29 @@ export default function NewProjectPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto text-blue-100">
-      {/* Header */}
-      <div className="mb-8">
-        <Link
+    <>
+    <Link
           href="/workspace/projects"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+          className="inline-flex items-center ml-3 mt-3 rounded-lg p-2 text-sm text-white bg-emerald-500 hover:bg-emerald-300 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Projects
+          {/* Back to Projects */}
         </Link>
-        <h1 className="text-3xl font-bold text-white mb-2">Create New Project</h1>
-        <p className="text-blue-200">Start building your wireframe project</p>
+    <div className="p-3 max-w-2xl mx-auto text-blue-100">
+      {/* Header */}
+       
+      <div className="mb-4 pl-5 flex flex-col items-center justify-center">
+
+       
+        <h1 className="text-2xl font-semibold text-black p-1">Create New Project</h1>
+        <p className="text-black text-sm">Start building your wireframe project</p>
       </div>
 
       {/* Form */}
-      <Card className="bg-white/10 backdrop-blur-xl ring-1 ring-white/10">
+      <Card className="bg-white/10 border-2 shadow-lg backdrop-blur-xl ring-1 ring-white/10">
         <CardHeader>
-          <CardTitle>Project Details</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-black font-semibold text-xl">Project Details</CardTitle>
+          <CardDescription className="text-black text-sm">
             Give your project a name and description to get started
           </CardDescription>
         </CardHeader>
@@ -93,7 +97,7 @@ export default function NewProjectPage() {
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-black text-md">
               <Label htmlFor="name">Project Name</Label>
               <Input
                 id="name"
@@ -103,11 +107,11 @@ export default function NewProjectPage() {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full"
+                className="w-full placeholder:text-grey-500 text-grey focus:border-black"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-black text-md">
               <Label htmlFor="description">Description</Label>
               <textarea
                 id="description"
@@ -116,21 +120,22 @@ export default function NewProjectPage() {
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-white placeholder:text-blue-200"
+                className="w-full px-3 py-2 text-sm bg-white/5 border border-black/10 rounded-lg  focus:border-transparent resize-none text-black placeholder:text-black-200"
               />
             </div>
 
-            <div className="flex items-start space-x-3">
+            <div className="flex items-center space-x-3 text-white">
               <Checkbox
+              className="bg-white"
                 id="isPublic"
                 checked={formData.isPublic}
                 onCheckedChange={handleCheckboxChange}
               />
-              <div className="space-y-1">
-                <Label htmlFor="isPublic" className="text-sm font-medium">
+              <div className="text-white">
+                <Label htmlFor="isPublic" className="text-sm font-medium text-black">
                   Make this project public
                 </Label>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 text-black">
                   Public projects can be viewed by others and may appear in search results
                 </p>
               </div>
@@ -139,7 +144,7 @@ export default function NewProjectPage() {
             <div className="flex items-center justify-between pt-6 border-t border-gray-200">
               <Link
                 href="/workspace/projects"
-                className="px-4 py-2 text-sm text-blue-200 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm text-blue-700 hover:text-blue-300 transition-colors"
               >
                 Cancel
               </Link>
@@ -172,24 +177,25 @@ export default function NewProjectPage() {
 
       {/* Project Templates */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Start Templates</h2>
+        <h2 className="text-lg font-semibold text-white mb-4">Quick Start Templates</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 border border-white/10 bg-white/5 rounded-lg hover:border-blue-300/60 hover:bg-blue-500/10 transition-colors cursor-pointer">
-            <h3 className="font-medium text-gray-900 mb-2">Dashboard Wireframe</h3>
+            <h3 className="font-medium text-white mb-2">Dashboard Wireframe</h3>
             <p className="text-sm text-blue-200 mb-3">Pre-configured with common dashboard components</p>
-            <Button variant="outline" size="sm" className="text-blue-100">
+            <Button variant="outline" size="sm" className="bg-blue-700">
               Use Template
             </Button>
           </div>
           <div className="p-4 border border-white/10 bg-white/5 rounded-lg hover:border-green-300/60 hover:bg-green-500/10 transition-colors cursor-pointer">
             <h3 className="font-medium text-white mb-2">Mobile App Wireframe</h3>
             <p className="text-sm text-blue-200 mb-3">Optimized for mobile app design and layout</p>
-            <Button variant="outline" size="sm" className="text-blue-100">
+            <Button variant="outline" size="sm" className="bg-blue-700">
               Use Template
             </Button>
           </div>
         </div>
       </div>
     </div>
+    </>
   )
 }

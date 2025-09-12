@@ -104,16 +104,16 @@ export default function ProjectsPage() {
   return (
     <div className="p-6 text-blue-100">
       {/* Back Button */}
-      <div className="mb-6">
+      <div className="mb-6 ">
         <Link
           href="/workspace"
           className={
             `inline-flex items-center px-4 py-2 backdrop-blur-xl ring-1 rounded-lg transition-all duration-300 hover:scale-105
-             bg-white/10 ring-white/10 text-white hover:bg-white/20 hover:ring-white/20`
+             bg-white/10 ring-white/10 text-black hover:bg-emerald-300  bg-emerald-500 rounded-full`
           }
         >
-          <ArrowLeft className="h-4 w-4 mr-2 text-white" />
-          Back to Workspace
+          <ArrowLeft className="h-4 w-4 mr-2 text-white  " />
+          {/* Back  */}
         </Link>
       </div>
 
@@ -121,40 +121,40 @@ export default function ProjectsPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Projects</h1>
-            <p className="text-blue-200">Manage your wireframe projects</p>
+            <h1 className="text-xl font-bold text-black mb-2">Projects</h1>
+            <p className="text-black text-sm">Manage your wireframe projects</p>
           </div>
-          <Link
+          {/* <Link
             href="/workspace/projects/new"
             className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-colors"
           >
             <Plus className="h-4 w-4 mr-2" />
             New Project
-          </Link>
+          </Link> */}
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white/10 backdrop-blur-xl ring-1 ring-white/10 rounded-lg p-6 mb-6">
+      <div className="bg-white/10 backdrop-blur-xl ring-1 ring-white/10 rounded-lg p-6 mb-6 border-2 border-blue-200 shadow-lg">
         <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300" />
+          <div className="flex-1 ">
+            <div className="relative border-2 rounded-lg border-black ">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
               <input
                 type="text"
                 placeholder="Search projects..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder:text-blue-200"
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border placeholder: text-md transparent rounded-lg  text-black "
               />
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-blue-300" />
+            <Filter className="h-4 w-4 text-blue-700 hover:text-blue-300" />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 bg-white/5 border border-white/10 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="p-3 py-2 w-36 border-2 rounded-lg bg-white/5 border border-black text-black rounded-lg "
             >
               <option value="all">All Projects</option>
               <option value="recent">Recent</option>
@@ -168,13 +168,13 @@ export default function ProjectsPage() {
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
         <div className="text-center py-12">
-          <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-            <BarChart3 className="h-12 w-12 text-gray-400" />
+          <div className="mx-auto w-24 h-24  shadow-lg bg-emerald-500 rounded-full  flex items-center justify-center mb-4">
+            <BarChart3 className="h-12 w-12 text-white" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-black mb-2">
             {searchTerm ? "No projects found" : "No projects yet"}
           </h3>
-          <p className="text-gray-500 mb-6">
+          <p className="text-black text-md text-semibold mb-6">
             {searchTerm 
               ? "Try adjusting your search terms or filters."
               : "Get started by creating your first wireframe project."
@@ -200,7 +200,7 @@ export default function ProjectsPage() {
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white mb-2 line-clamp-1">
+                    <h3 className="text-lg font-semibold text-black mb-2 line-clamp-1">
                       {project.name}
                     </h3>
                     <p className="text-sm text-blue-200 line-clamp-2 mb-3">

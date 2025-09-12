@@ -161,14 +161,14 @@ export default function WorkspaceLayout({
       </div>
 
       {/* Attractive Navbar */}
-      <header className="relative z-50 bg-white/10 backdrop-blur-xl border-b border-white/10">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
+      <header className="relative z-50 bg-blue-700 backdrop-blur-xl border-b border-white/10">
+        <div className="w-full px-3 sm:px-3 lg:px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center">
               <Link href="/workspace" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="h-5 w-5 text-white" />
+                <div className="w-10 h-10 bg-emerald-500  rounded-lg flex items-center justify-center">
+                  <BarChart3 className="h-8 w-8  p-1 text-white" />
                 </div>
                 <span className="text-xl font-bold text-white">FixFrame</span>
               </Link>
@@ -194,7 +194,7 @@ export default function WorkspaceLayout({
             {/* Right Side Actions */}
             <div className="flex items-center space-x-4">
               {/* Search */}
-              <div className="hidden sm:block">
+              {/* <div className="hidden sm:block">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300" />
                   <input
@@ -203,28 +203,28 @@ export default function WorkspaceLayout({
                     className="w-64 pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* Quick Actions */}
               <div className="flex items-center space-x-2">
                 {/* Notifications */}
-                <button className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                {/* <button className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                   <Bell className="h-5 w-5" />
-                </button>
+                </button> */}
 
                 {/* Profile Dropdown */}
                 <div className="relative">
                   <button 
                     onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                    className="flex items-center space-x-2 p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                    className="flex items-center h-10 w-10 text-blue-500 rounded-full transition-colors"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-white" />
+                    <div className="w-10 h-10 bg-emerald-500 rounded-full shadow-lg flex items-center   justify-center">
+                      <User className="h-5 w-5 text-white hover:text-blue-500" />
                     </div>
-                    <span className="hidden sm:inline text-sm font-medium">
+                    {/* <span className="hidden sm:inline text-sm font-medium">
                       {user ? `${user.firstName} ${user.lastName}` : "Profile"}
-                    </span>
-                    <ChevronDown className="h-4 w-4" />
+                    </span> */}
+                    {/* <ChevronDown className="h-4 w-4" /> */}
                   </button>
 
                   {/* Profile Dropdown Menu */}
@@ -232,22 +232,22 @@ export default function WorkspaceLayout({
                     <div className="absolute right-0 mt-2 w-64 bg-white/10 backdrop-blur-xl ring-1 ring-white/10 rounded-lg shadow-lg z-50">
                       <div className="p-4 border-b border-white/10">
                         <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                            <User className="h-6 w-6 text-white" />
+                          <div className="w-12 h-12 bg-emerald-500  rounded-full flex items-center justify-center">
+                            <User className="h-6 w-6 text-white hover:text-blue-500" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-white font-medium">
+                            <h3 className="text-black font-semibold">
                               {user ? `${user.firstName} ${user.lastName}` : "User"}
                             </h3>
-                            <p className="text-blue-200 text-sm">{user?.email || "user@example.com"}</p>
+                            <p className="text-black text-sm">{user?.email || "user@example.com"}</p>
                             {user?.jobTitle && user?.company && (
-                              <p className="text-blue-300 text-xs mt-1">
+                              <p className="text-black text-xs mt-1">
                                 {user.jobTitle} at {user.company}
                               </p>
                             )}
                             {user?.location && (
-                              <p className="text-blue-300 text-xs flex items-center mt-1">
-                                <MapPin className="h-3 w-3 mr-1" />
+                              <p className="text-black text-xs flex items-center mt-1">
+                                <MapPin className="h-3 w-3 mr-1 text-black" />
                                 {user.location}
                               </p>
                             )}
@@ -266,7 +266,7 @@ export default function WorkspaceLayout({
                             setShowEditProfile(true)
                             setShowProfileDropdown(false)
                           }}
-                          className="w-full flex items-center px-3 py-2 text-sm text-blue-100 hover:bg-white/10 hover:text-white rounded-lg transition-colors"
+                          className="w-full flex items-center px-3 py-2 text-sm text-black hover:bg-blue-500 hover:text-white rounded-lg "
                         >
                           <Edit className="h-4 w-4 mr-3" />
                           Edit Profile
@@ -274,7 +274,7 @@ export default function WorkspaceLayout({
                         
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center px-3 py-2 text-sm text-blue-100 hover:bg-white/10 hover:text-white rounded-lg transition-colors"
+                          className="w-full flex items-center px-3 py-2 text-sm text-black hover:bg-blue-500 hover:text-white rounded-lg transition-colors"
                         >
                           <LogOut className="h-4 w-4 mr-3" />
                           Sign Out
@@ -312,24 +312,24 @@ export default function WorkspaceLayout({
       </header>
 
       {/* Main content */}
-      <main className="relative z-10">
+      <main className="relative z-10 bg-white">
         {children}
       </main>
 
       {/* Edit Profile Modal */}
       {showEditProfile && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm  shadow-lg flex items-center justify-center z-50 p-4">
           <div className="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl ring-1 ring-white/20 rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl shadow-blue-500/25">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+                <div className="p-2 bg-emerald-500 rounded-lg">
                   <Edit className="h-5 w-5 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white">Edit Profile</h3>
+                <h3 className="text-xl font-bold text-black">Edit Profile</h3>
               </div>
               <button
                 onClick={() => setShowEditProfile(false)}
-                className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-blue-300 hover:text-black hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -338,35 +338,35 @@ export default function WorkspaceLayout({
             <form onSubmit={handleEditProfile} className="space-y-6">
               {/* Personal Information */}
               <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-white flex items-center">
-                  <User className="h-5 w-5 mr-2 text-blue-300" />
+                <h4 className="text-lg font-semibold text-black flex items-center">
+                  <User className="h-5 w-5 mr-2 text-blue-500" />
                   Personal Information
                 </h4>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-blue-200 mb-2">
+                    <label className="block text-sm font-medium text-black mb-2">
                       First Name *
                     </label>
                     <input
                       type="text"
                       value={editForm.firstName}
                       onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder:text-grey-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="Enter your first name"
                       required
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-blue-200 mb-2">
+                    <label className="block text-sm font-medium text-black mb-2">
                       Last Name *
                     </label>
                     <input
                       type="text"
                       value={editForm.lastName}
                       onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 bg-white/10 border-2  rounded-xl text-white placeholder:text-grey-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="Enter your last name"
                       required
                     />
@@ -374,30 +374,30 @@ export default function WorkspaceLayout({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     Email Address *
                   </label>
                   <input
                     type="email"
                     value={editForm.email}
                     onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder:text-grey-300  focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="your@email.com"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     Phone Number
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300" />
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-500" />
                     <input
                       type="tel"
                       value={editForm.phone}
                       onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full pl-10 pr-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder:text-grey-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="+1 (555) 123-4567"
                     />
                   </div>
@@ -406,36 +406,36 @@ export default function WorkspaceLayout({
 
               {/* Professional Information */}
               <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-white flex items-center">
-                  <Briefcase className="h-5 w-5 mr-2 text-green-300" />
+                <h4 className="text-lg font-semibold text-black flex items-center">
+                  <Briefcase className="h-5 w-5 mr-2 text-green-500" />
                   Professional Information
                 </h4>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-blue-200 mb-2">
+                    <label className="block text-sm font-medium text-black mb-2">
                       Job Title
                     </label>
                     <input
                       type="text"
                       value={editForm.jobTitle}
                       onChange={(e) => setEditForm({...editForm, jobTitle: e.target.value})}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder:text-grey-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="e.g., Software Engineer"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-blue-200 mb-2">
+                    <label className="block text-sm font-medium text-black mb-2">
                       Company
                     </label>
                     <div className="relative">
-                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300" />
+                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-500" />
                       <input
                         type="text"
                         value={editForm.company}
                         onChange={(e) => setEditForm({...editForm, company: e.target.value})}
-                        className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full pl-10 pr-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder:text-grey-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         placeholder="Your company name"
                       />
                     </div>
@@ -443,32 +443,32 @@ export default function WorkspaceLayout({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     Location
                   </label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300" />
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-500" />
                     <input
                       type="text"
                       value={editForm.location}
                       onChange={(e) => setEditForm({...editForm, location: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full pl-10 pr-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder:text-grey-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="City, Country"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     Website
                   </label>
                   <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300" />
+                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-500" />
                     <input
                       type="url"
                       value={editForm.website}
                       onChange={(e) => setEditForm({...editForm, website: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full pl-10 pr-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder:text-grey-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="https://yourwebsite.com"
                     />
                   </div>
@@ -477,19 +477,19 @@ export default function WorkspaceLayout({
 
               {/* Bio Section */}
               <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-white flex items-center">
-                  <FileText className="h-5 w-5 mr-2 text-purple-300" />
+                <h4 className="text-lg font-semibold text-black flex items-center">
+                  <FileText className="h-5 w-5 mr-2 text-purple-500" />
                   About You
                 </h4>
                 
                 <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     Bio
                   </label>
                   <textarea
                     value={editForm.bio}
                     onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                    className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder:text-grey-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                     placeholder="Tell us about yourself..."
                     rows={4}
                   />
@@ -501,7 +501,7 @@ export default function WorkspaceLayout({
                 <button
                   type="button"
                   onClick={() => setShowEditProfile(false)}
-                  className="px-6 py-3 text-sm text-blue-200 hover:text-white transition-colors"
+                  className="px-6 py-3 text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-400 hover:to-indigo-400 rounded-xl transition-colors"
                 >
                   Cancel
                 </button>
