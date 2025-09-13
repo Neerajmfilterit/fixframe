@@ -86,3 +86,20 @@ export interface ProjectShare {
   expiresAt?: Date
   createdAt: Date
 }
+
+export interface ProjectComment {
+  _id: ObjectId
+  projectId: ObjectId
+  authorEmail: string
+  authorName?: string
+  content: string
+  position?: {
+    x: number
+    y: number
+    pageId: string
+  }
+  chartId?: string
+  isResolved: boolean
+  createdAt: Date
+  updatedAt: Date
+}

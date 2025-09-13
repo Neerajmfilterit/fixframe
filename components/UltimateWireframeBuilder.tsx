@@ -7,7 +7,8 @@ import {
   AlignLeft, Menu, ChevronDown, Check, MousePointer,
   AlertTriangle, UserCircle, Tag, ToggleLeft, Sliders,
   Minus as DividerIcon, Copy, Trash2, Edit3, Layers,
-  ChevronLeft, ChevronRight, X, Sparkles, Code
+  ChevronLeft, ChevronRight, X, Sparkles, Code,
+  Share2
 } from 'lucide-react';
 import { DarkModeBarChart, DarkModeDonutChart, DEFAULT_COLORS } from './DarkModeCharts';
 import { RechartsLineChart, RechartsAreaChart } from './RechartsComponents';
@@ -25,6 +26,8 @@ import EnhancedChartCustomizer from './EnhancedChartCustomizer';
 import FixframeAI from './FixframeAI';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import ShareModal from './ShareModal';
+import CommentSystem from './CommentSystem';
 
 interface Comment {
   id: string;
@@ -375,6 +378,8 @@ export default function UltimateWireframeBuilder({
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [projectName, setProjectName] = useState('My Wireframe');
   const [isSaving, setIsSaving] = useState(false);
+  const [isViewOnly, setIsViewOnly] = useState(false);
+  const [isPublicAccess, setIsPublicAccess] = useState(false);
   const [draggedChart, setDraggedChart] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [draggedTemplate, setDraggedTemplate] = useState<typeof CHART_TEMPLATES[0] | null>(null);
@@ -384,6 +389,9 @@ export default function UltimateWireframeBuilder({
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'charts' | 'components' | 'slides'>('charts');
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showPdfOptions, setShowPdfOptions] = useState(false);
+  const [selectedSlides, setSelectedSlides] = useState<string[]>([]);
 
   // Slide system state
   const [pages, setPages] = useState<Page[]>([
@@ -397,6 +405,18 @@ export default function UltimateWireframeBuilder({
     if (initialProject) {
       // Load from MongoDB project data
       setProjectName(initialProject.name || 'My Wireframe');
+
+      // Check if this is a shared project and set permissions
+      if (initialProject.isShared || initialProject.isPublicAccess) {
+        setIsPublicAccess(true);
+        
+        // Set view-only mode based on permission level
+        if (initialProject.userPermission === 'view') {
+          setIsViewOnly(true);
+        } else if (initialProject.userPermission === 'edit') {
+          setIsViewOnly(false); // Edit permission allows editing
+        }
+      }
 
       // Handle both old format (charts) and new format (pages)
       if (initialProject.pages) {
@@ -650,6 +670,8 @@ export default function UltimateWireframeBuilder({
   };
 
   const handleMouseDown = (e: React.MouseEvent, chartId: string) => {
+    if (isViewOnly) return; // Disable dragging in view-only mode
+    
     const currentPageCharts = getCurrentPageCharts();
     const chart = currentPageCharts.find(c => c.id === chartId);
     if (!chart) return;
@@ -722,6 +744,8 @@ export default function UltimateWireframeBuilder({
 
   // Handle drag start from sidebar
   const handleSidebarMouseDown = (e: React.MouseEvent, template: typeof CHART_TEMPLATES[0]) => {
+    if (isViewOnly) return; // Disable sidebar dragging in view-only mode
+    
     e.preventDefault();
     setDraggedTemplate(template);
     setIsDraggingFromSidebar(true);
@@ -987,6 +1011,22 @@ export default function UltimateWireframeBuilder({
     URL.revokeObjectURL(url);
   };
 
+  const selectAllSlides = () => {
+    setSelectedSlides(pages.map(page => page.id));
+  };
+  
+  const toggleSlideSelection = (slideId: string) => {
+    setSelectedSlides(prev => 
+      prev.includes(slideId) 
+        ? prev.filter(id => id !== slideId) 
+        : [...prev, slideId]
+    );
+  };
+
+  const clearSlideSelection = () => {
+    setSelectedSlides([]);
+  };
+
   const exportCode = () => {
     const codeData = {
       projectName,
@@ -1020,58 +1060,137 @@ export default function UltimateWireframeBuilder({
     URL.revokeObjectURL(url);
   };
 
-  const exportAsPDF = async () => {
+  const exportAsPDF = async (exportType: 'all' | 'current' | 'selected' = 'all') => {
     if (!canvasRef.current) return;
-
+   
     try {
       // Show loading state
       setIsSaving(true);
-
+     
       // Temporarily hide the customization panel for clean export
       const customizer = document.querySelector('[data-customizer]') as HTMLElement;
       const originalDisplay = customizer?.style.display;
       if (customizer) customizer.style.display = 'none';
-
-      // Create canvas from the chart area
-      const canvas = await html2canvas(canvasRef.current, {
-        background: isDarkMode ? '#111827' : '#ffffff',
-        useCORS: true,
-        allowTaint: true,
-        width: canvasRef.current.scrollWidth,
-        height: canvasRef.current.scrollHeight
-      });
-
-      // Restore customization panel
-      if (customizer) customizer.style.display = originalDisplay || '';
-
-      // Calculate PDF/page dimensions using jsPDF internal sizes
-      const pdf = new jsPDF('p', 'mm', 'a4');
+     
+      // Small delay to ensure all charts are fully rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
+     
+      // Use landscape orientation for better chart display
+      const pdf = new jsPDF('l', 'mm', 'a4'); // landscape orientation
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // Scale image to full page width and keep aspect ratio
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      // Start at top of page (no vertical centering to avoid large white band)
-      let position = 0;
-      let heightLeft = imgHeight;
-
-      // First page
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      // Additional pages (no leading blank pages)
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      const margin = 10; // 10mm margin
+      const maxWidth = pageWidth - (margin * 2);
+      const maxHeight = pageHeight - (margin * 2);
+     
+      // Store original page state
+      const originalPageId = currentPageId;
+     
+      // Determine which pages to export
+      let pagesToExport;
+      if (exportType === 'current') {
+        pagesToExport = [pages.find(p => p.id === currentPageId)].filter(Boolean);
+      } else if (exportType === 'selected') {
+        pagesToExport = pages.filter(p => selectedSlides.includes(p.id));
+      } else {
+        pagesToExport = pages;
       }
-
-      // Save PDF
-      pdf.save(`${projectName.replace(/\s+/g, '_')}_wireframe.pdf`);
-
+     
+      // Process each slide/page
+      for (let i = 0; i < pagesToExport.length; i++) {
+        const page = pagesToExport[i];
+       
+        // Switch to this page
+        if (page) {
+          setCurrentPageId(page.id);
+        }
+       
+        // Wait for page switch and chart rendering to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
+       
+        // Force a re-render by triggering a resize event
+        window.dispatchEvent(new Event('resize'));
+        await new Promise(resolve => setTimeout(resolve, 500));
+       
+        // Create canvas from the visible chart area for this page
+        let canvas;
+        try {
+          canvas = await html2canvas(canvasRef.current, {
+            background: isDarkMode ? '#111827' : '#ffffff',
+            useCORS: true,
+            allowTaint: true,
+            width: canvasRef.current.clientWidth,
+            height: canvasRef.current.clientHeight,
+            logging: true // Enable logging to debug
+          });
+        } catch (error) {
+          console.error('Canvas capture failed, trying fallback:', error);
+          // Fallback: capture the entire viewport
+          canvas = await html2canvas(document.body, {
+            background: isDarkMode ? '#111827' : '#ffffff',
+            useCORS: true,
+            allowTaint: true,
+            logging: true
+          });
+        }
+       
+        // Add page title if not the first page
+        if (i > 0) {
+          pdf.addPage();
+        }
+       
+        // Add slide title at the top
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        if (page) {
+          pdf.text(page.name, margin, margin + 5);
+        }
+       
+        // Add a line separator
+        pdf.setLineWidth(0.5);
+        pdf.line(margin, margin + 8, pageWidth - margin, margin + 8);
+       
+        // Calculate dimensions to fit the chart area (below title)
+        const titleHeight = 15; // Space for title and line
+        const availableHeight = maxHeight - titleHeight;
+        const availableWidth = maxWidth;
+       
+        const scaleX = availableWidth / canvas.width;
+        const scaleY = availableHeight / canvas.height;
+        const scale = Math.min(scaleX, scaleY);
+       
+        const imgWidth = canvas.width * scale;
+        const imgHeight = canvas.height * scale;
+       
+        // Center the image on the page (below title)
+        const x = (pageWidth - imgWidth) / 2;
+        const y = margin + titleHeight + (availableHeight - imgHeight) / 2;
+       
+        // Debug: Log canvas info
+        console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+        console.log('Canvas data URL length:', canvas.toDataURL('image/png').length);
+       
+        // Add image to PDF
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, imgWidth, imgHeight);
+      }
+     
+      // Restore original page
+      setCurrentPageId(originalPageId);
+     
+      // Restore customization panel
+      if (customizer) customizer.style.display = originalDisplay || '';
+     
+      // Save PDF with appropriate filename
+      let filename;
+      if (exportType === 'current') {
+        filename = `${projectName.replace(/\s+/g, '_')}_slide_${getCurrentPage()?.name.replace(/\s+/g, '_') || 'current'}.pdf`;
+      } else if (exportType === 'selected') {
+        filename = `${projectName.replace(/\s+/g, '_')}_selected_${selectedSlides.length}_slides.pdf`;
+      } else {
+        filename = `${projectName.replace(/\s+/g, '_')}_presentation.pdf`;
+      }
+      pdf.save(filename);
+     
     } catch (error) {
       console.error('PDF export failed:', error);
       alert('Failed to export PDF. Please try again.');
@@ -1153,7 +1272,7 @@ export default function UltimateWireframeBuilder({
             break;
           case 'e':
             e.preventDefault();
-            if (getCurrentPageCharts().length > 0) exportAsPDF();
+            if (pages.some(page => page.charts.length > 0)) setShowPdfOptions(true);
             break;
         }
       }
@@ -1161,7 +1280,7 @@ export default function UltimateWireframeBuilder({
         setSelectedChart(null);
       }
     };
-
+ 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
@@ -1218,7 +1337,7 @@ export default function UltimateWireframeBuilder({
       `}</style>
       <div className={`h-screen ${bgClass} flex`}>
         {/* Sidebar - Widget Library */}
-        <div className={`w-80 ${sidebarBgClass} border-r ${borderClass} flex flex-col sidebar-scrollbar`}>
+        <div className={`w-80 ${sidebarBgClass} border-r ${borderClass} flex flex-col sidebar-scrollbar ${isViewOnly ? 'opacity-60' : ''}`}>
           {/* Header */}
           <div className={`p-4 border-b ${borderClass}`}>
             <div className="mb-16">
@@ -1558,9 +1677,14 @@ export default function UltimateWireframeBuilder({
                   type="text"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  className={`text-lg font-medium bg-transparent border-none outline-none focus:bg-opacity-50 px-2 py-1 rounded transition-all duration-200 ${inputClass}`}
+                  disabled={isViewOnly}
+                  className={`text-lg font-medium bg-transparent border-none outline-none focus:bg-opacity-50 px-2 py-1 rounded transition-all duration-200 ${inputClass} ${isViewOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
                 />
-
+                {isPublicAccess && (
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
+                    {isViewOnly ? '👁️ View Only' : '✏️ Can Edit'}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -1580,53 +1704,73 @@ export default function UltimateWireframeBuilder({
 
 
                 <button
-                  onClick={saveWireframe}
-                  disabled={isSaving}
-                  className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-2 ${isSaving
-                      ? isDarkMode
-                        ? 'bg-gray-700 text-gray-500'
-                        : 'bg-gray-100 text-gray-400'
+                onClick={saveWireframe}
+                disabled={isSaving || isViewOnly}
+                className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
+                  isSaving || isViewOnly
+                    ? isDarkMode
+                      ? 'bg-gray-700 text-gray-500'
+                      : 'bg-gray-100 text-gray-400'
+                    : isDarkMode
+                      ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30'
+                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                }`}
+              >
+                <Save className="w-4 h-4" />
+               
+                save
+              </button>
+ 
+              {/* Share Button */}
+              <button
+                onClick={() => setShowShareModal(true)}
+                disabled={isViewOnly}
+                className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
+                  isViewOnly
+                    ? isDarkMode
+                      ? 'bg-gray-700 text-gray-500'
+                      : 'bg-gray-100 text-gray-400'
+                    : isDarkMode
+                      ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                      : 'bg-green-100 text-green-700 hover:bg-green-200'
+                }`}
+                title={isViewOnly ? "Cannot share in view-only mode" : "Share project"}
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+ 
+              {/* Export Options */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    const totalCharts = pages.reduce((sum, page) => sum + page.charts.length, 0);
+                    if (totalCharts === 0) {
+                      alert('Add at least one chart to export a PDF.');
+                      return;
+                    }
+                    setShowPdfOptions(true);
+                  }}
+                  disabled={isSaving || !pages.some(page => page.charts.length > 0)}
+                  className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
+                    isSaving || !pages.some(page => page.charts.length > 0)
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : isDarkMode
-                        ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30'
-                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                    }`}
+                        ? 'bg-red-900/20 text-red-400 hover:bg-red-900/30'
+                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                  }`}
+                  title="Export as PDF"
                 >
-                  <Save className="w-3 h-3" />
-                  {isSaving ? 'Saving...' : 'Save'}
+                  <Download className="w-4 h-4" />
+                  {isSaving ? 'Exporting...' : 'PDF'}
                 </button>
+               
+               
+              </div>
 
                 {/* Export Options */}
                 <div className="flex items-center gap-1">
-                  <button
-                    onClick={exportAsPDF}
-                    disabled={isSaving || charts.length === 0}
-                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-2 ${isSaving || charts.length === 0
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : isDarkMode
-                          ? 'bg-red-900/20 text-red-400 hover:bg-red-900/30'
-                          : 'bg-red-100 text-red-700 hover:bg-red-200'
-                      }`}
-                    title="Export as PDF"
-                  >
-                    <Download className="w-3 h-3" />
-                    {isSaving ? 'Exporting...' : 'PDF'}
-                  </button>
-
-                  <button
-                    onClick={exportWireframe}
-                    disabled={charts.length === 0}
-                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-2 ${charts.length === 0
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : isDarkMode
-                          ? 'bg-green-900/20 text-green-400 hover:bg-green-900/30'
-                          : 'bg-green-100 text-green-700 hover:bg-green-200'
-                      }`}
-                    title="Export as JSON"
-                  >
-                    <FileText className="w-3 h-3" />
-                    JSON
-                  </button>
-
+                
                   <button
                     onClick={() => {
                       console.log('UltimateWireframeBuilder: Code button clicked, setting showCodeModal to true');
@@ -1846,6 +1990,160 @@ export default function UltimateWireframeBuilder({
             onShowCodeModal={setShowCodeModal}
           />
         </div>
+        {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        projectName={projectName}
+        isDarkMode={isDarkMode}
+        projectId={projectId || undefined}
+      />
+ 
+      {/* PDF Options Modal */}
+      {showPdfOptions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Export PDF
+              </h3>
+              <button
+                onClick={() => {
+                  setShowPdfOptions(false);
+                  setSelectedSlides([]);
+                }}
+                className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+           
+            <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              Choose what you want to export:
+            </p>
+           
+            <div className="space-y-3">
+             
+              {/* Custom Selection Option */}
+              <div className={`p-4 rounded-lg border-2 ${
+                isDarkMode
+                  ? 'border-purple-500 bg-purple-900/20'
+                  : 'border-purple-500 bg-purple-50'
+              }`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-5 h-5 rounded flex items-center justify-center ${
+                    isDarkMode ? 'bg-purple-600' : 'bg-purple-500'
+                  }`}>
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <div className={`font-medium ${isDarkMode ? 'text-purple-400' : 'text-purple-700'}`}>
+                      Select Specific Slides
+                    </div>
+                    <div className={`text-sm opacity-75 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`}>
+                      Choose which slides to include
+                    </div>
+                  </div>
+                </div>
+ 
+                {/* Selection Controls */}
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={selectAllSlides}
+                    className={`px-3 py-1 text-xs rounded transition-colors ${
+                      isDarkMode
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Select All
+                  </button>
+                  <button
+                    onClick={clearSlideSelection}
+                    className={`px-3 py-1 text-xs rounded transition-colors ${
+                      isDarkMode
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Clear All
+                  </button>
+                </div>
+ 
+                {/* Slides List */}
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {pages.map((page, index) => (
+                    <label
+                      key={page.id}
+                      className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
+                        isDarkMode
+                          ? 'hover:bg-gray-700'
+                          : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSlides.includes(page.id)}
+                        onChange={() => toggleSlideSelection(page.id)}
+                        className={`w-4 h-4 rounded ${
+                          isDarkMode
+                            ? 'text-purple-600 bg-gray-700 border-gray-600'
+                            : 'text-purple-600 bg-white border-gray-300'
+                        }`}
+                      />
+                      <div className="flex-1">
+                        <div className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                          {page.name}
+                        </div>
+                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {page.charts.length} element{page.charts.length !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+ 
+                {/* Export Selected Button */}
+                <button
+                  onClick={() => {
+                    if (selectedSlides.length === 0) {
+                      alert('Please select at least one slide to export.');
+                      return;
+                    }
+                    setShowPdfOptions(false);
+                    exportAsPDF('selected');
+                  }}
+                  disabled={isSaving || selectedSlides.length === 0}
+                  className={`w-full mt-3 p-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                    isDarkMode
+                      ? 'bg-purple-600 text-white hover:bg-purple-700'
+                      : 'bg-purple-500 text-white hover:bg-purple-600'
+                  } ${isSaving || selectedSlides.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <Download className="w-4 h-4" />
+                  Export Selected ({selectedSlides.length} slide{selectedSlides.length !== 1 ? 's' : ''})
+                </button>
+              </div>
+            </div>
+           
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowPdfOptions(false);
+                  setSelectedSlides([]);
+                }}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
       
       {/* Fixframe AI Modal */}
@@ -1853,6 +2151,19 @@ export default function UltimateWireframeBuilder({
         show={showFixframeAI} 
         onClose={() => setShowFixframeAI(false)} 
       />
+
+      {/* Comment System */}
+      {projectId && (
+        <CommentSystem
+          projectId={projectId}
+          isDarkMode={isDarkMode}
+          isViewOnly={isViewOnly}
+          isPublicAccess={isPublicAccess}
+          permission={typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('permission') || undefined : undefined}
+          currentPageId={currentPageId}
+          selectedChart={selectedChart}
+        />
+      )}
     </>
   );
 }

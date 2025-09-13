@@ -1,195 +1,315 @@
 "use client"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Save, Eye } from "lucide-react"
+ 
+import { useState, useEffect } from "react"
 import Link from "next/link"
-
-export default function NewProjectPage() {
-  const [formData, setFormData] = useState({
+import {
+  Plus,
+  FolderOpen,
+  Calendar,
+  BarChart3,
+  FileText,
+  Clock,
+  X,
+  ArrowRight,
+  Settings,
+  Users
+} from "lucide-react"
+ 
+interface Project {
+  _id: string
+  name: string
+  description: string
+  createdAt: string
+  updatedAt: string
+  charts: any[]
+}
+ 
+export default function WorkspaceDashboard() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showCreatePopup, setShowCreatePopup] = useState(false)
+  const [createForm, setCreateForm] = useState({
     name: "",
     description: "",
     isPublic: false
   })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [creating, setCreating] = useState(false)
+ 
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+ 
+  const fetchDashboardData = async () => {
+    try {
+      const projectsRes = await fetch("/api/projects")
+     
+      if (projectsRes.ok) {
+        const projectsData = await projectsRes.json()
+        setProjects(projectsData.slice(0, 6)) // Show recent 6 projects
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+ 
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setError("")
-
+    setCreating(true)
+ 
     try {
       const response = await fetch("/api/projects", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(createForm),
       })
-
+ 
       const data = await response.json()
-
+ 
       if (response.ok) {
-        router.push(`/builder?project=${data.project._id}`)
+        setShowCreatePopup(false)
+        setCreateForm({ name: "", description: "", isPublic: false })
+        fetchDashboardData() // Refresh data
+        // Redirect to builder
+        window.location.href = `/builder?project=${data.project._id}`
       } else {
-        setError(data.error || "Failed to create project")
+        alert(data.error || "Failed to create project")
       }
     } catch (error) {
-      setError("Network error. Please try again.")
+      alert("Network error. Please try again.")
     } finally {
-      setIsLoading(false)
+      setCreating(false)
     }
   }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
+ 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString()
   }
-
-  const handleCheckboxChange = (checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      isPublic: checked,
-    }))
-  }
-
-  return (
-    <div className="p-6 max-w-2xl mx-auto text-blue-100">
-      {/* Header */}
-      <div className="mb-8">
-        <Link
-          href="/workspace/projects"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Projects
-        </Link>
-        <h1 className="text-3xl font-bold text-white mb-2">Create New Project</h1>
-        <p className="text-blue-200">Start building your wireframe project</p>
-      </div>
-
-      {/* Form */}
-      <Card className="bg-white/10 backdrop-blur-xl ring-1 ring-white/10">
-        <CardHeader>
-          <CardTitle>Project Details</CardTitle>
-          <CardDescription>
-            Give your project a name and description to get started
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 text-sm text-red-200 bg-red-500/20 border border-red-500/30 rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Project Name</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="My Awesome Wireframe"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <textarea
-                id="description"
-                name="description"
-                placeholder="Describe what this wireframe project is about..."
-                value={formData.description}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-white placeholder:text-blue-200"
-              />
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                id="isPublic"
-                checked={formData.isPublic}
-                onCheckedChange={handleCheckboxChange}
-              />
-              <div className="space-y-1">
-                <Label htmlFor="isPublic" className="text-sm font-medium">
-                  Make this project public
-                </Label>
-                <p className="text-xs text-gray-500">
-                  Public projects can be viewed by others and may appear in search results
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-              <Link
-                href="/workspace/projects"
-                className="px-4 py-2 text-sm text-blue-200 hover:text-white transition-colors"
-              >
-                Cancel
-              </Link>
-              <div className="flex items-center space-x-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    // Preview mode - could open in new tab
-                    console.log("Preview project")
-                  }}
-                  className="flex items-center"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Preview
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isLoading || !formData.name.trim()}
-                  className="flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {isLoading ? "Creating..." : "Create Project"}
-                </Button>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Project Templates */}
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Start Templates</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 border border-white/10 bg-white/5 rounded-lg hover:border-blue-300/60 hover:bg-blue-500/10 transition-colors cursor-pointer">
-            <h3 className="font-medium text-gray-900 mb-2">Dashboard Wireframe</h3>
-            <p className="text-sm text-blue-200 mb-3">Pre-configured with common dashboard components</p>
-            <Button variant="outline" size="sm" className="text-blue-100">
-              Use Template
-            </Button>
+ 
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-white/20 rounded w-1/4 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 bg-white/10 rounded-xl"></div>
+            ))}
           </div>
-          <div className="p-4 border border-white/10 bg-white/5 rounded-lg hover:border-green-300/60 hover:bg-green-500/10 transition-colors cursor-pointer">
-            <h3 className="font-medium text-white mb-2">Mobile App Wireframe</h3>
-            <p className="text-sm text-blue-200 mb-3">Optimized for mobile app design and layout</p>
-            <Button variant="outline" size="sm" className="text-blue-100">
-              Use Template
-            </Button>
+          <div className="h-96 bg-white/10 rounded-xl"></div>
+        </div>
+      </div>
+    )
+  }
+ 
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-8">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Workspace</h1>
+              <p className="text-slate-600 mt-2 font-medium">Manage and organize your wireframe projects</p>
+            </div>
+           
           </div>
         </div>
       </div>
+ 
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Quick Actions */}
+        <div className="mb-12">
+          <h2 className="text-xl font-semibold text-slate-900 mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <button
+              onClick={() => setShowCreatePopup(true)}
+              className="group p-8 bg-white border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-lg transition-all duration-300 text-left"
+            >
+              <div className="flex items-center space-x-6">
+                <div className="p-4 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
+                  <Plus className="h-7 w-7 text-slate-700" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Create New Project</h3>
+                  <p className="text-slate-600 leading-relaxed">Start building professional wireframes and dashboards</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
+              </div>
+            </button>
+           
+            <Link
+              href="/workspace/projects"
+              className="group p-8 bg-white border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-lg transition-all duration-300 text-left"
+            >
+              <div className="flex items-center space-x-6">
+                <div className="p-4 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
+                  <FileText className="h-7 w-7 text-slate-700" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Browse All Projects</h3>
+                  <p className="text-slate-600 leading-relaxed">View, manage, and organize your existing projects</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
+              </div>
+            </Link>
+          </div>
+        </div>
+ 
+        {/* Recent Projects */}
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900">Recent Projects</h2>
+              <p className="text-slate-600 mt-1">Your latest wireframe projects</p>
+            </div>
+            <Link
+              href="/workspace/projects"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              View all →
+            </Link>
+          </div>
+         
+          {projects.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {projects.map((project) => (
+                <Link
+                  key={project._id}
+                  href={`/builder?project=${project._id}`}
+                  className="group p-6 bg-white border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 bg-slate-50 rounded-lg group-hover:bg-slate-100 transition-colors">
+                      <BarChart3 className="h-6 w-6 text-slate-700" />
+                    </div>
+                    <span className="text-xs text-slate-500 font-medium">
+                      {formatDate(project.updatedAt)}
+                    </span>
+                  </div>
+                  <h3 className="font-semibold text-slate-900 mb-3 group-hover:text-slate-700 transition-colors">
+                    {project.name}
+                  </h3>
+                  <p className="text-sm text-slate-600 mb-4 line-clamp-2 leading-relaxed">
+                    {project.description || "No description provided"}
+                  </p>
+                  <div className="flex items-center text-xs text-slate-500">
+                    <Clock className="h-3 w-3 mr-2" />
+                    <span className="font-medium">Updated {formatDate(project.updatedAt)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-white border border-slate-200 rounded-xl">
+              <div className="p-4 bg-slate-50 rounded-xl w-fit mx-auto mb-6">
+                <FolderOpen className="h-12 w-12 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-3">No projects yet</h3>
+              <p className="text-slate-600 mb-8 max-w-md mx-auto leading-relaxed">
+                Get started by creating your first wireframe project. Build professional dashboards and wireframes in minutes.
+              </p>
+              <button
+                onClick={() => setShowCreatePopup(true)}
+                className="inline-flex items-center px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Create Your First Project
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+ 
+      {/* Create Project Modal */}
+      {showCreatePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <Plus className="h-6 w-6 text-slate-700" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-slate-900">Create New Project</h3>
+                  <p className="text-sm text-slate-600">Start building your wireframe</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCreatePopup(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+           
+            <form onSubmit={handleCreateProject} className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">
+                  Project Name
+                </label>
+                <input
+                  type="text"
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all"
+                  placeholder="Enter project name"
+                  required
+                />
+              </div>
+             
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">
+                  Description
+                </label>
+                <textarea
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none transition-all"
+                  placeholder="Describe your project goals and requirements..."
+                  rows={4}
+                  required
+                />
+              </div>
+             
+              <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl">
+                <input
+                  type="checkbox"
+                  id="isPublic"
+                  checked={createForm.isPublic}
+                  onChange={(e) => setCreateForm({...createForm, isPublic: e.target.checked})}
+                  className="h-4 w-4 text-slate-600 focus:ring-slate-500 border-slate-300 rounded"
+                />
+                <label htmlFor="isPublic" className="text-sm text-slate-700 font-medium">
+                  Make this project public
+                </label>
+              </div>
+             
+              <div className="flex items-center justify-end space-x-4 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowCreatePopup(false)}
+                  className="px-6 py-3 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating || !createForm.name.trim()}
+                  className="px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {creating ? "Creating..." : "Create Project"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+ 

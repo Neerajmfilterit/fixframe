@@ -33,10 +33,28 @@ export default function BuilderPage() {
 
   const fetchProject = async (id: string) => {
     try {
-      const response = await fetch(`/api/projects/${id}`)
+      const permission = searchParams.get('permission')
+      
+      let url: string
+      if (permission) {
+        // Use public endpoint for shared projects (no authentication required)
+        url = `/api/projects/${id}/public?permission=${permission}`
+      } else {
+        // Use regular endpoint for project owners
+        url = `/api/projects/${id}`
+      }
+      
+      const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
         setProject(data)
+      } else {
+        console.error("Failed to fetch project:", response.statusText)
+        if (response.status === 401) {
+          console.error("Authentication required. Please log in to access this project.")
+        } else if (response.status === 404) {
+          console.error("Project not found or share link is invalid/expired.")
+        }
       }
     } catch (error) {
       console.error("Error fetching project:", error)

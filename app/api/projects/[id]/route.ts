@@ -7,6 +7,8 @@ import { ObjectId } from "mongodb"
 export const GET = requireAuth(async (request: NextRequest, user, context: { params: { id: string } }) => {
   try {
     const { id } = context.params
+    const url = new URL(request.url)
+    const permission = url.searchParams.get('permission')
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid project ID" }, { status: 400 })
@@ -15,14 +17,44 @@ export const GET = requireAuth(async (request: NextRequest, user, context: { par
     const client = await clientPromise
     const db = client.db("wireframe-builder")
     const projects = db.collection("projects")
+    const projectShares = db.collection("projectShares")
 
-    const project = await projects.findOne({ 
+    let project = null
+
+    // First, try to find the project as the owner
+    project = await projects.findOne({ 
       _id: new ObjectId(id),
       userId: new ObjectId(user._id) 
     })
 
+    // If not found as owner, check if it's shared with this user
     if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+      const share = await projectShares.findOne({
+        projectId: new ObjectId(id),
+        $or: [
+          { sharedWith: new ObjectId(user._id) },
+          { shareToken: permission } // Allow access via share token
+        ]
+      })
+
+      if (share) {
+        // Get the project data
+        project = await projects.findOne({ _id: new ObjectId(id) })
+        
+        if (project) {
+          // Add permission info to the project
+          project.userPermission = share.permissions
+          project.isShared = true
+        }
+      }
+    } else {
+      // User owns the project
+      project.userPermission = 'edit'
+      project.isShared = false
+    }
+
+    if (!project) {
+      return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 })
     }
 
     return NextResponse.json(project)
