@@ -2289,8 +2289,6 @@ ${cleanProjectName}/
           onUpdateChart(selectedChart.id, { data: multibarData });
         }
         
-        alert(`Successfully imported ${parsedData.length} data points!`);
-        
       } catch (error) {
         console.error('Error parsing file:', error);
         alert(`Error parsing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -2421,7 +2419,6 @@ ${cleanProjectName}/
           }));
           onUpdateChart(selectedChart.id, { data: multibarData });
         }
-        alert(`Successfully imported ${parsedData.length} data points from API!`);
       }
 
     } catch (error) {

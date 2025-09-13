@@ -375,7 +375,7 @@ export default function UltimateWireframeBuilder({
 }: UltimateWireframeBuilderProps = {}) {
   const [charts, setCharts] = useState<Chart[]>([]);
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [projectName, setProjectName] = useState('My Wireframe');
   const [isSaving, setIsSaving] = useState(false);
   const [isViewOnly, setIsViewOnly] = useState(false);
@@ -999,7 +999,8 @@ export default function UltimateWireframeBuilder({
       timestamp: new Date().toISOString(),
       projectName,
       isDarkMode,
-      charts
+      pages,
+      currentPageId
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });

@@ -8,10 +8,12 @@ import { ArrowLeft } from "lucide-react"
 const UltimateWireframeBuilder = dynamic(() => import("@/components/UltimateWireframeBuilder"), { 
   ssr: false,
   loading: () => (
-    <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="fixed inset-0 flex items-center justify-center bg-slate-50">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-blue-200">Loading wireframe builder...</p>
+        <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-black mx-auto mb-6"></div>
+        <p className="text-black text-lg font-semibold" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+          Loading wireframe builder...
+        </p>
       </div>
     </div>
   )
@@ -65,10 +67,12 @@ export default function BuilderPage() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-blue-200">Loading project...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-black mx-auto mb-6"></div>
+          <p className="text-black text-lg font-semibold" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+            Loading project...
+          </p>
         </div>
       </div>
     )
