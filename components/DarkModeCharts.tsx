@@ -50,10 +50,23 @@ export function DarkModeBarChart({
   const textClass = isDarkMode ? 'text-gray-100' : 'text-gray-700';
   const textSecondaryClass = isDarkMode ? 'text-gray-400' : 'text-gray-600';
   
+  // Layout calculations for responsive sizing
+  const headerApprox = 56; // tighter header
+  const verticalPadding = 14; // tighter padding for more space
+  const legendApprox = 50; // reserve more space for legend so it's always visible
+  const innerWidth = Math.max(0, width - 32);
+  const availableHeight = Math.max(80, height - headerApprox - verticalPadding - legendApprox);
+  const count = Math.max(1, data.length);
+  const gap = Math.max(8, Math.min(20, Math.floor(innerWidth / (count * 6))));
+  const computedBarWidth = Math.max(10, Math.floor((innerWidth - gap * (count - 1)) / count));
+  // keep label width equal to bar width to avoid misalignment
+  const barWidth = Math.min(computedBarWidth, 80);
+  const barMaxHeight = Math.max(60, availableHeight - 18);
+
   return (
     <div
-      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-200 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''}`}
-      style={{ left: x, top: y, width, height }}
+      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-150 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''} overflow-hidden`}
+      style={{ left: x, top: y, width, height, willChange: 'width, height' }}
       onClick={() => onSelect(id)}
     >
       {/* Header */}
@@ -99,17 +112,17 @@ export function DarkModeBarChart({
       </div>
 
       {/* Chart Area */}
-      <div className="p-4 flex-1 flex flex-col">
-        <div className="flex-1 flex items-end justify-center gap-3 mb-4" style={{ minHeight: '200px' }}>
+      <div className="p-4 flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex items-end justify-center mb-1" style={{ minHeight: `${Math.max(80, availableHeight)}px`, gap, paddingBottom: 0 }}>
           {data.map((item, index) => {
-            const barHeight = Math.max((item.value / maxValue) * 180, 12);
+            const barHeight = Math.max((item.value / maxValue) * barMaxHeight, 8);
             return (
-              <div key={index} className="flex flex-col items-center justify-end" style={{ width: '60px' }}>
+              <div key={index} className="flex flex-col items-center justify-end" style={{ width: `${barWidth}px` }}>
                 <div className={`text-xs font-medium mb-2 text-center ${textClass}`}>
                   {item.value}
                 </div>
                 <div
-                  className="w-full rounded-t-lg transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-pointer border border-white/20"
+                  className="w-full rounded-t-lg transition-[height,transform,box-shadow] duration-100 hover:scale-[1.03] hover:shadow-md cursor-pointer border border-white/20"
                   style={{
                     height: `${barHeight}px`,
                     backgroundColor: item.color,
@@ -122,12 +135,10 @@ export function DarkModeBarChart({
             );
           })}
         </div>
-        <div className="flex justify-center gap-3">
+        <div className="flex justify-center" style={{ columnGap: gap, rowGap: 0, maxWidth: '100%', flexWrap: 'nowrap', overflow: 'visible', paddingTop: 4, height: 28 }}>
           {data.map((item, index) => (
-            <div key={index} className="text-center" style={{ width: '60px' }}>
-              <div className={`text-xs font-medium truncate ${textSecondaryClass}`}>
-                {item.name}
-              </div>
+            <div key={index} className="text-center" style={{ width: `${barWidth}px`, minWidth: `${barWidth}px` }}>
+              <div className={`text-xs font-medium truncate ${textSecondaryClass}`}>{item.name}</div>
             </div>
           ))}
         </div>
@@ -151,9 +162,23 @@ export function DarkModeDonutChart({
   titleColor, titleSize, titleWeight, isDarkMode
 }: DonutChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  const centerX = 110;
-  const centerY = 110;
-  const radius = 85;
+  // Compute size responsively based on container
+  const padding = 12; // compact padding around svg
+  const headerApprox = 44; // header height estimate
+  // Adaptive donut/legend split for very small cards
+  const remaining = Math.max(120, height - headerApprox);
+  const donutFraction = (width < 240 || height < 260) ? 0.5 : 0.6; // give more space to legends on small sizes
+  const donutArea = Math.max(90, Math.floor(remaining * donutFraction));
+  const boxSize = Math.max(90, Math.min(width - padding * 2, donutArea - padding * 2));
+  // Legend columns adapt by width (aim ~72px per cell)
+  const approxCell = 72;
+  const legendCols = Math.max(1, Math.min(data.length, Math.floor((width - 2 * padding) / approxCell)) || 1);
+  const legendFont = Math.max(9, Math.min(12, Math.floor((width / Math.max(1, legendCols)) / 10)));
+  const centerX = Math.floor(boxSize / 2);
+  const centerY = Math.floor(boxSize / 2);
+  const radius = Math.max(40, Math.floor((boxSize / 2) - 12));
+  const totalFontSize = Math.max(12, Math.floor(boxSize * 0.18));
+  const labelFontSize = Math.max(10, Math.floor(totalFontSize * 0.4));
   
   const bgClass = isDarkMode ? 'bg-gray-800' : 'bg-white';
   const borderClass = isDarkMode ? 'border-gray-600' : 'border-gray-200';
@@ -197,8 +222,8 @@ export function DarkModeDonutChart({
 
   return (
     <div
-      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-200 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''}`}
-      style={{ left: x, top: y, width, height }}
+      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-150 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''} overflow-hidden`}
+      style={{ left: x, top: y, width, height, willChange: 'width, height' }}
       onClick={() => onSelect(id)}
     >
       {/* Header */}
@@ -244,10 +269,10 @@ export function DarkModeDonutChart({
       </div>
 
       {/* Chart Area */}
-      <div className="p-4 flex-1 flex flex-col">
+      <div className="p-4 flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 flex items-center justify-center">
-          <div className="relative">
-            <svg width="220" height="220" className="transform -rotate-90 drop-shadow-lg">
+          <div className="relative" style={{ width: boxSize, height: boxSize, willChange: 'width, height' }}>
+            <svg width={boxSize} height={boxSize} className="transform -rotate-90" style={{ willChange: 'transform' }}>
               {paths.map((item, index) => (
                 <path
                   key={index}
@@ -255,9 +280,9 @@ export function DarkModeDonutChart({
                   fill={item.color}
                   stroke={isDarkMode ? "#374151" : "white"}
                   strokeWidth="3"
-                  className="hover:opacity-80 transition-all duration-300 cursor-pointer hover:drop-shadow-xl"
+                  className="hover:opacity-80 transition-all duration-75 cursor-pointer"
                   style={{
-                    filter: `drop-shadow(0 2px 4px ${item.color}40)`
+                    shapeRendering: 'geometricPrecision'
                   }}
                 />
               ))}
@@ -265,7 +290,7 @@ export function DarkModeDonutChart({
               <circle
                 cx={centerX}
                 cy={centerY}
-                r="45"
+                r={Math.max(24, Math.floor(radius * 0.52))}
                 fill={isDarkMode ? "#1F2937" : "white"}
                 stroke={isDarkMode ? "#4B5563" : "#f3f4f6"}
                 strokeWidth="2"
@@ -274,11 +299,11 @@ export function DarkModeDonutChart({
             
             {/* Center text */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <div className={`text-3xl font-bold ${textClass}`}>
+              <div className="text-center" style={{ willChange: 'contents' }}>
+                <div className={`font-bold ${textClass}`} style={{ fontSize: `${totalFontSize}px`, lineHeight: 1 }}>
                   {total}
                 </div>
-                <div className={`text-sm font-medium ${textSecondaryClass}`}>
+                <div className={`font-medium ${textSecondaryClass}`} style={{ fontSize: `${labelFontSize}px`, lineHeight: 1.1 }}>
                   Total
                 </div>
               </div>
@@ -288,15 +313,15 @@ export function DarkModeDonutChart({
       </div>
 
       {/* Legend */}
-      <div className="px-4 pb-4">
-        <div className="grid grid-cols-2 gap-2 text-xs">
+      <div className="px-3 pb-2">
+        <div
+          className="grid gap-1.5 w-full max-w-full"
+          style={{ gridTemplateColumns: `repeat(${legendCols}, 1fr)` }}
+        >
           {data.map((item, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full border border-white/20"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className={`truncate ${textSecondaryClass}`}>{item.name}</span>
+            <div key={index} className="flex items-center gap-2 min-w-0">
+              <div className="rounded-full border border-white/20 flex-shrink-0" style={{ backgroundColor: item.color, width: 8, height: 8 }} />
+              <span className={`${textSecondaryClass} min-w-0 max-w-full whitespace-normal break-words leading-tight`} style={{ fontSize: `${legendFont}px` }}>{item.name}</span>
             </div>
           ))}
         </div>

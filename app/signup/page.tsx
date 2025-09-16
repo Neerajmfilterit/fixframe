@@ -56,7 +56,7 @@ export default function SignupPage() {
       const data = await response.json()
  
       if (response.ok) {
-        router.push("/workspace")
+        router.push("/workspace/projects")
       } else {
         setError(data.error || "Signup failed")
       }
@@ -75,7 +75,14 @@ export default function SignupPage() {
   }
  
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative">
+      <Link
+        href="/"
+        className="group absolute left-4 top-4 px-4 py-2 rounded-xl text-slate-700 bg-white/70 backdrop-blur border border-slate-200 hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 inline-flex items-center justify-center gap-2"
+      >
+        <span className="inline-flex w-4 justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out">←</span>
+        <span className="transition-transform duration-300 ease-in-out group-hover:translate-x-1">Back</span>
+      </Link>
       <div className="w-full max-w-md space-y-8">
         {/* Signup Form */}
         <div className="bg-white rounded-2xl p-8 shadow-xl border border-slate-200">
@@ -210,11 +217,11 @@ export default function SignupPage() {
               <div>
                 <label htmlFor="terms" className="text-sm text-slate-700 font-medium leading-relaxed">
                   I agree to the{" "}
-                  <Link href="/terms" className="text-slate-900 hover:text-slate-700 transition-colors">
+                  <Link href={"/terms" as any} className="text-slate-900 hover:text-slate-700 transition-colors">
                     Terms of Service
                   </Link>{" "}
                   and{" "}
-                  <Link href="/privacy" className="text-slate-900 hover:text-slate-700 transition-colors">
+                  <Link href={"/privacy" as any} className="text-slate-900 hover:text-slate-700 transition-colors">
                     Privacy Policy
                   </Link>
                 </label>
@@ -235,7 +242,7 @@ export default function SignupPage() {
         <div className="text-center">
           <p className="text-sm text-slate-600">
             Already have an account?{" "}
-            <Link href="/" className="text-slate-900 hover:text-slate-700 font-semibold transition-colors">
+            <Link href="/signin" className="text-slate-900 hover:text-slate-700 font-semibold transition-colors">
               Sign in
             </Link>
           </p>

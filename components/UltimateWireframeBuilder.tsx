@@ -1,27 +1,29 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  BarChart3, PieChart, Save, FolderOpen, FileText,
+import { 
+  BarChart3, PieChart, Save, FolderOpen, FileText, 
   Download, Upload, Eye, EyeOff, Grid, Plus, Moon, Sun,
   TrendingUp, Activity, Table, BarChart2, Square, Type, Image,
   AlignLeft, Menu, ChevronDown, Check, MousePointer,
   AlertTriangle, UserCircle, Tag, ToggleLeft, Sliders,
   Minus as DividerIcon, Copy, Trash2, Edit3, Layers,
   ChevronLeft, ChevronRight, X, Sparkles, Code,
-  Share2
+  Share2, Circle
 } from 'lucide-react';
 import { DarkModeBarChart, DarkModeDonutChart, DEFAULT_COLORS } from './DarkModeCharts';
 import { RechartsLineChart, RechartsAreaChart } from './RechartsComponents';
 import { ShadcnTable } from './ShadcnTable';
 import { ShadcnComboChart } from './ShadcnComboChart';
 import ShadcnMultiBarChart, { MultiBarChartData } from './ShadcnMultiBarChart';
-import {
+import { 
   WireframeButton, WireframeInput, WireframeText, WireframeImage,
-  WireframeCard, WireframeNavigation, WireframeDropdown,
+  WireframeCard, WireframeNavigation, WireframeDropdown, 
   WireframeCheckbox, WireframeProgress, WireframeAlert,
   WireframeAvatar, WireframeBadge, WireframeSwitch,
-  WireframeSlider, WireframeTextarea, WireframeSeparator
+  WireframeSlider, WireframeTextarea, WireframeSeparator,
+  WireframeIconButton
 } from './WireframeComponents';
+import { WireframeRadioButton } from './WireframeRadioButton';
 import EnhancedChartCustomizer from './EnhancedChartCustomizer';
 import FixframeAI from './FixframeAI';
 import html2canvas from 'html2canvas';
@@ -40,7 +42,7 @@ interface Comment {
 
 interface Chart {
   id: string;
-  type: 'bar' | 'donut' | 'line' | 'area' | 'table' | 'combo' | 'multibar' | 'button' | 'input' | 'text' | 'image' | 'card' | 'navigation' | 'dropdown' | 'checkbox' | 'progress' | 'alert' | 'avatar' | 'badge' | 'switch' | 'slider' | 'textarea' | 'separator';
+  type: 'bar' | 'donut' | 'line' | 'area' | 'table' | 'combo' | 'multibar' | 'button' | 'iconbutton' | 'input' | 'text' | 'image' | 'card' | 'navigation' | 'dropdown' | 'checkbox' | 'progress' | 'alert' | 'avatar' | 'badge' | 'switch' | 'slider' | 'textarea' | 'separator' | 'radio';
   title: string;
   x: number;
   y: number;
@@ -54,7 +56,7 @@ interface Chart {
     striped: boolean;
     compact: boolean;
     roundedCorners: boolean;
-  };
+  } | { text: string; checked: boolean } | { progress: number; text: string } | { options: string[]; selected: string; label: string } | any;
   titleColor: string;
   titleSize: number;
   titleWeight: string;
@@ -85,7 +87,7 @@ const CHART_TEMPLATES = [
   },
   {
     type: 'donut' as const,
-    name: 'Donut Chart',
+    name: 'Donut Chart', 
     icon: PieChart,
     category: 'charts',
     defaultData: [
@@ -206,6 +208,77 @@ const CHART_TEMPLATES = [
       type: 'primary'
     }
   },
+  // Icon Button Templates (new iconbutton type)
+  {
+    type: 'iconbutton' as const,
+    name: 'Save',
+    icon: Save,
+    category: 'icons',
+    defaultData: { icon: 'Save' }
+  },
+  {
+    type: 'iconbutton' as const,
+    name: 'Download',
+    icon: Download,
+    category: 'icons',
+    defaultData: { icon: 'Download' }
+  },
+  {
+    type: 'iconbutton' as const,
+    name: 'Upload',
+    icon: Upload,
+    category: 'icons',
+    defaultData: { icon: 'Upload' }
+  },
+  {
+    type: 'iconbutton' as const,
+    name: 'Share',
+    icon: Share2,
+    category: 'icons',
+    defaultData: { icon: 'Share' }
+  },
+  {
+    type: 'iconbutton' as const,
+    name: 'Edit',
+    icon: Edit3,
+    category: 'icons',
+    defaultData: { icon: 'Edit' }
+  },
+  {
+    type: 'iconbutton' as const,
+    name: 'Delete',
+    icon: Trash2,
+    category: 'icons',
+    defaultData: { icon: 'Delete' }
+  },
+  {
+    type: 'iconbutton' as const,
+    name: 'Copy',
+    icon: Copy,
+    category: 'icons',
+    defaultData: { icon: 'Copy' }
+  },
+  {
+    type: 'iconbutton' as const,
+    name: 'Tag',
+    icon: Tag,
+    category: 'icons',
+    defaultData: { icon: 'Tag' }
+  },
+  {
+    type: 'iconbutton' as const,
+    name: 'User',
+    icon: UserCircle,
+    category: 'icons',
+    defaultData: { icon: 'User' }
+  },
+  {
+    type: 'iconbutton' as const,
+    name: 'Code',
+    icon: Code,
+    category: 'icons',
+    defaultData: { icon: 'Code' }
+  },
   {
     type: 'input' as const,
     name: 'Input Field',
@@ -274,6 +347,23 @@ const CHART_TEMPLATES = [
     defaultData: {
       text: 'Checkbox option',
       checked: false
+    }
+  },
+  {
+    type: 'radio' as const,
+    name: 'Radio Button',
+    icon: Circle,
+    category: 'components',
+    defaultData: {
+      options: ['Option 1', 'Option 2', 'Option 3'],
+      selected: 'Option 1',
+      label: 'Select an option',
+      color: '#3B82F6',
+      borderColor: '#D1D5DB',
+      layout: 'horizontal',
+      size: 'medium',
+      spacing: 'medium',
+      labelSize: 'medium'
     }
   },
   {
@@ -361,6 +451,7 @@ const CHART_TEMPLATES = [
 // Helper functions to filter templates by category
 const getChartTemplates = () => CHART_TEMPLATES.filter(template => template.category === 'charts');
 const getComponentTemplates = () => CHART_TEMPLATES.filter(template => template.category === 'components');
+const getIconTemplates = () => CHART_TEMPLATES.filter(template => template.category === 'icons');
 
 interface UltimateWireframeBuilderProps {
   projectId?: string | null;
@@ -368,10 +459,10 @@ interface UltimateWireframeBuilderProps {
   onThemeChange?: (isDark: boolean) => void;
 }
 
-export default function UltimateWireframeBuilder({
-  projectId,
-  initialProject,
-  onThemeChange
+export default function UltimateWireframeBuilder({ 
+  projectId, 
+  initialProject, 
+  onThemeChange 
 }: UltimateWireframeBuilderProps = {}) {
   const [charts, setCharts] = useState<Chart[]>([]);
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
@@ -392,6 +483,17 @@ export default function UltimateWireframeBuilder({
   const [showShareModal, setShowShareModal] = useState(false);
   const [showPdfOptions, setShowPdfOptions] = useState(false);
   const [selectedSlides, setSelectedSlides] = useState<string[]>([]);
+  // Resize state
+  const [resizingChartId, setResizingChartId] = useState<string | null>(null);
+  const [resizeHandle, setResizeHandle] = useState<
+    null | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
+  >(null);
+  const resizeStartRef = useRef<{ mouseX: number; mouseY: number; x: number; y: number; width: number; height: number; aspect: number } | null>(null);
+  const resizeFrameRef = useRef<number | null>(null);
+  const resizeLatestRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+  // Drag throttle state
+  const dragFrameRef = useRef<number | null>(null);
+  const dragLatestRef = useRef<{ id: string; x: number; y: number } | null>(null);
 
   // Slide system state
   const [pages, setPages] = useState<Page[]>([
@@ -417,7 +519,7 @@ export default function UltimateWireframeBuilder({
           setIsViewOnly(false); // Edit permission allows editing
         }
       }
-
+      
       // Handle both old format (charts) and new format (pages)
       if (initialProject.pages) {
         setPages(initialProject.pages);
@@ -427,23 +529,23 @@ export default function UltimateWireframeBuilder({
         const convertedPages = [{
           id: 'page-1',
           name: 'Slide 1',
-          charts: initialProject.charts.map((chart: any) => ({ ...chart, pageId: 'page-1' })),
+          charts: initialProject.charts.map((chart: any) => ({ ...chart, pageId: 'page-1', comments: chart.comments || [] })),
           isActive: true
         }];
         setPages(convertedPages);
         setCurrentPageId('page-1');
       }
-
+      
       if (typeof initialProject.isDarkMode === 'boolean') {
         setIsDarkMode(initialProject.isDarkMode);
       }
     } else {
       // Fallback to localStorage
-      const currentWireframe = localStorage.getItem('currentWireframe');
-      if (currentWireframe) {
-        try {
-          const wireframeData = JSON.parse(currentWireframe);
-
+    const currentWireframe = localStorage.getItem('currentWireframe');
+    if (currentWireframe) {
+      try {
+        const wireframeData = JSON.parse(currentWireframe);
+          
           // Handle both old format (charts) and new format (pages)
           if (wireframeData.pages) {
             setPages(wireframeData.pages);
@@ -453,29 +555,29 @@ export default function UltimateWireframeBuilder({
             const convertedPages = [{
               id: 'page-1',
               name: 'Slide 1',
-              charts: wireframeData.charts.map((chart: any) => ({ ...chart, pageId: 'page-1' })),
+              charts: wireframeData.charts.map((chart: any) => ({ ...chart, pageId: 'page-1', comments: chart.comments || [] })),
               isActive: true
             }];
             setPages(convertedPages);
             setCurrentPageId('page-1');
           }
-
-          if (wireframeData.projectName) {
-            setProjectName(wireframeData.projectName);
-          }
+          
+        if (wireframeData.projectName) {
+          setProjectName(wireframeData.projectName);
+        }
           // Always default to dark mode, ignore saved preference
           setIsDarkMode(true);
-
+          
           // Update localStorage to ensure dark mode is saved
           const updatedWireframeData = {
             ...wireframeData,
             isDarkMode: true
           };
           localStorage.setItem('currentWireframe', JSON.stringify(updatedWireframeData));
-        } catch (error) {
-          console.error('Error loading project data:', error);
-        }
+      } catch (error) {
+        console.error('Error loading project data:', error);
       }
+    }
     }
   }, [initialProject]);
 
@@ -517,6 +619,8 @@ export default function UltimateWireframeBuilder({
           return { width: 600, height: 400 };
         case 'button':
           return { width: 120, height: 80 };
+        case 'iconbutton':
+          return { width: 140, height: 60 };
         case 'input':
           return { width: 200, height: 80 };
         case 'text':
@@ -531,6 +635,8 @@ export default function UltimateWireframeBuilder({
           return { width: 180, height: 80 };
         case 'checkbox':
           return { width: 150, height: 60 };
+        case 'radio':
+          return { width: 200, height: 120 };
         case 'progress':
           return { width: 250, height: 80 };
         default:
@@ -539,7 +645,7 @@ export default function UltimateWireframeBuilder({
     };
 
     const dimensions = getChartDimensions(template.type);
-
+    
     const newChart: Chart = {
       id: `${template.type}-${Date.now()}`,
       type: template.type,
@@ -548,8 +654,8 @@ export default function UltimateWireframeBuilder({
       y: y !== undefined ? y : Math.random() * 200 + 50,
       width: dimensions.width,
       height: dimensions.height,
-      data: Array.isArray(template.defaultData)
-        ? [...template.defaultData]
+      data: Array.isArray(template.defaultData) 
+        ? [...template.defaultData] 
         : JSON.parse(JSON.stringify(template.defaultData)),
       titleColor: isDarkMode ? '#F3F4F6' : '#1F2937',
       titleSize: 16,
@@ -557,22 +663,22 @@ export default function UltimateWireframeBuilder({
       comments: [],
       pageId: currentPageId
     };
-
+    
     // Add chart to current page
-    setPages(prev => prev.map(page =>
-      page.id === currentPageId
+    setPages(prev => prev.map(page => 
+      page.id === currentPageId 
         ? { ...page, charts: [...page.charts, newChart] }
         : page
     ));
-
+    
     setSelectedChart(newChart.id);
   };
 
   const updateChart = (id: string, updates: Partial<Chart>) => {
     setPages(prev => prev.map(page => ({
       ...page,
-      charts: page.charts.map(chart =>
-        chart.id === id ? { ...chart, ...updates } : chart
+      charts: page.charts.map(chart => 
+      chart.id === id ? { ...chart, ...updates } : chart
       )
     })));
   };
@@ -600,10 +706,10 @@ export default function UltimateWireframeBuilder({
 
     setPages(prev => prev.map(page => ({
       ...page,
-      charts: page.charts.map(chart =>
-        chart.id === chartId
-          ? { ...chart, comments: [...chart.comments, newComment] }
-          : chart
+      charts: page.charts.map(chart => 
+      chart.id === chartId 
+          ? { ...chart, comments: [...(chart.comments || []), newComment] }
+        : chart
       )
     })));
   };
@@ -611,17 +717,17 @@ export default function UltimateWireframeBuilder({
   const resolveComment = (chartId: string, commentId: string) => {
     setPages(prev => prev.map(page => ({
       ...page,
-      charts: page.charts.map(chart =>
-        chart.id === chartId
-          ? {
-            ...chart,
-            comments: chart.comments.map(comment =>
-              comment.id === commentId
+      charts: page.charts.map(chart => 
+      chart.id === chartId 
+        ? {
+            ...chart, 
+            comments: (chart.comments || []).map(comment =>
+              comment.id === commentId 
                 ? { ...comment, resolved: !comment.resolved }
                 : comment
             )
           }
-          : chart
+        : chart
       )
     })));
   };
@@ -629,13 +735,13 @@ export default function UltimateWireframeBuilder({
   const deleteComment = (chartId: string, commentId: string) => {
     setPages(prev => prev.map(page => ({
       ...page,
-      charts: page.charts.map(chart =>
-        chart.id === chartId
-          ? {
-            ...chart,
-            comments: chart.comments.filter(comment => comment.id !== commentId)
+      charts: page.charts.map(chart => 
+      chart.id === chartId 
+        ? {
+            ...chart, 
+            comments: (chart.comments || []).filter(comment => comment.id !== commentId)
           }
-          : chart
+        : chart
       )
     })));
   };
@@ -651,20 +757,20 @@ export default function UltimateWireframeBuilder({
 
     setPages(prev => prev.map(page => ({
       ...page,
-      charts: page.charts.map(chart =>
-        chart.id === chartId
-          ? {
-            ...chart,
-            comments: chart.comments.map(comment =>
-              comment.id === commentId
-                ? {
-                  ...comment,
-                  replies: [...(comment.replies || []), newReply]
-                }
+      charts: page.charts.map(chart => 
+      chart.id === chartId 
+        ? {
+            ...chart, 
+            comments: (chart.comments || []).map(comment =>
+              comment.id === commentId 
+                ? { 
+                    ...comment, 
+                    replies: [...(comment.replies || []), newReply] 
+                  }
                 : comment
             )
           }
-          : chart
+        : chart
       )
     })));
   };
@@ -707,11 +813,18 @@ export default function UltimateWireframeBuilder({
     // Use chart's actual dimensions for boundary constraints
     const maxX = canvasRef.current.scrollWidth - chart.width;
     const maxY = canvasRef.current.scrollHeight - chart.height;
-
-    updateChart(draggedChart, {
-      x: Math.max(0, Math.min(x, maxX)),
-      y: Math.max(0, Math.min(y, maxY))
-    });
+    const nx = Math.max(0, Math.min(x, maxX));
+    const ny = Math.max(0, Math.min(y, maxY));
+    dragLatestRef.current = { id: draggedChart, x: nx, y: ny };
+    if (dragFrameRef.current == null) {
+      dragFrameRef.current = requestAnimationFrame(() => {
+        const latest = dragLatestRef.current;
+        if (latest) {
+          updateChart(latest.id, { x: latest.x, y: latest.y });
+        }
+        dragFrameRef.current = null;
+      });
+    }
   };
 
   const handleMouseUp = (e: MouseEvent) => {
@@ -729,18 +842,139 @@ export default function UltimateWireframeBuilder({
       const x = e.pageX - canvasRect.left - dragOffset.x;
       const y = e.pageY - canvasRect.top - dragOffset.y;
 
-      // Use chart's actual dimensions for boundary constraints
-      const maxX = canvasRef.current.scrollWidth - chart.width;
-      const maxY = canvasRef.current.scrollHeight - chart.height;
+    // Use chart's actual dimensions for boundary constraints
+    const maxX = canvasRef.current.scrollWidth - chart.width;
+    const maxY = canvasRef.current.scrollHeight - chart.height;
 
-      updateChart(draggedChart, {
-        x: Math.max(0, Math.min(x, maxX)),
-        y: Math.max(0, Math.min(y, maxY))
-      });
+    updateChart(draggedChart, {
+      x: Math.max(0, Math.min(x, maxX)),
+      y: Math.max(0, Math.min(y, maxY))
+    });
     }
 
     setDraggedChart(null);
   };
+
+  // Resize handlers
+  const startResize = (e: React.MouseEvent, chartId: string, handle: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw') => {
+    if (isViewOnly) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const chart = getCurrentPageCharts().find(c => c.id === chartId);
+    if (!chart) return;
+    setSelectedChart(chartId);
+    setResizingChartId(chartId);
+    setResizeHandle(handle);
+    resizeStartRef.current = {
+      mouseX: e.pageX,
+      mouseY: e.pageY,
+      x: chart.x,
+      y: chart.y,
+      width: chart.width,
+      height: chart.height,
+      aspect: chart.width / Math.max(1, chart.height)
+    };
+  };
+
+  const handleResizeMove = (e: MouseEvent) => {
+    if (!resizingChartId || !resizeHandle || !resizeStartRef.current) return;
+    const start = resizeStartRef.current;
+    let newX = start.x;
+    let newY = start.y;
+    let newW = start.width;
+    let newH = start.height;
+    const dx = e.pageX - start.mouseX;
+    const dy = e.pageY - start.mouseY;
+
+    const minW = 120;
+    const minH = 100;
+
+    const applyAspect = (corner: 'ne' | 'nw' | 'se' | 'sw') => {
+      // Maintain aspect ratio on diagonal handles
+      const signX = corner === 'ne' || corner === 'se' ? 1 : -1;
+      const signY = corner === 'se' || corner === 'sw' ? 1 : -1;
+      const proj = Math.abs(dx) > Math.abs(dy) ? dx : dy * start.aspect;
+      newW = Math.max(minW, start.width + proj * signX);
+      newH = Math.max(minH, newW / start.aspect);
+      if (corner === 'nw' || corner === 'sw') newX = start.x + (start.width - newW);
+      if (corner === 'nw' || corner === 'ne') newY = start.y + (start.height - newH);
+    };
+
+    switch (resizeHandle) {
+      case 'e':
+        newW = Math.max(minW, start.width + dx);
+        break;
+      case 'w':
+        newW = Math.max(minW, start.width - dx);
+        newX = start.x + (start.width - newW);
+        break;
+      case 's':
+        newH = Math.max(minH, start.height + dy);
+        break;
+      case 'n':
+        newH = Math.max(minH, start.height - dy);
+        newY = start.y + (start.height - newH);
+        break;
+      case 'ne':
+        applyAspect('ne');
+        break;
+      case 'nw':
+        applyAspect('nw');
+        break;
+      case 'se':
+        applyAspect('se');
+        break;
+      case 'sw':
+        applyAspect('sw');
+        break;
+    }
+
+    if (canvasRef.current) {
+      const maxX = Math.max(0, canvasRef.current.scrollWidth - newW);
+      const maxY = Math.max(0, canvasRef.current.scrollHeight - newH);
+      newX = Math.max(0, Math.min(newX, maxX));
+      newY = Math.max(0, Math.min(newY, maxY));
+    }
+
+    // Schedule resize update with rAF to keep it smooth
+    resizeLatestRef.current = { x: newX, y: newY, width: newW, height: newH };
+    if (resizeFrameRef.current == null) {
+      resizeFrameRef.current = requestAnimationFrame(() => {
+        const latest = resizeLatestRef.current;
+        if (latest && resizingChartId) {
+          updateChart(resizingChartId, latest);
+        }
+        resizeFrameRef.current = null;
+      });
+    }
+  };
+
+  const stopResize = () => {
+    setResizingChartId(null);
+    setResizeHandle(null);
+    resizeStartRef.current = null;
+    if (resizeFrameRef.current) {
+      cancelAnimationFrame(resizeFrameRef.current);
+      resizeFrameRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (resizingChartId) handleResizeMove(e);
+      else handleMouseMove(e);
+    };
+    const onUp = (e: MouseEvent) => {
+      if (resizingChartId) stopResize();
+      handleMouseUp(e);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [resizingChartId]);
 
   // Handle drag start from sidebar
   const handleSidebarMouseDown = (e: React.MouseEvent, template: typeof CHART_TEMPLATES[0]) => {
@@ -810,6 +1044,7 @@ export default function UltimateWireframeBuilder({
         case 'navigation': return { width: 400, height: 80 };
         case 'dropdown': return { width: 180, height: 80 };
         case 'checkbox': return { width: 150, height: 60 };
+        case 'radio': return { width: 200, height: 120 };
         case 'progress': return { width: 250, height: 80 };
         default: return { width: 400, height: 300 };
       }
@@ -836,7 +1071,7 @@ export default function UltimateWireframeBuilder({
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       if (draggedChart) {
-        handleMouseMove(e);
+      handleMouseMove(e);
       } else if (isDraggingFromSidebar) {
         handleSidebarMouseMove(e);
       }
@@ -874,7 +1109,7 @@ export default function UltimateWireframeBuilder({
       charts: [],
       isActive: false
     };
-
+    
     setPages(prev => prev.map(p => ({ ...p, isActive: false })).concat(newPage));
     setCurrentPageId(newPageId);
   };
@@ -887,7 +1122,7 @@ export default function UltimateWireframeBuilder({
 
   const deletePage = (pageId: string) => {
     if (pages.length <= 1) return; // Don't delete the last page
-
+    
     setPages(prev => {
       const filtered = prev.filter(p => p.id !== pageId);
       // If deleting current page, switch to first available page
@@ -907,7 +1142,8 @@ export default function UltimateWireframeBuilder({
     const duplicatedCharts = pageToDuplicate.charts.map(chart => ({
       ...chart,
       id: `${chart.id}-copy-${Date.now()}`,
-      pageId: newPageId
+      pageId: newPageId,
+      comments: chart.comments || []
     }));
 
     const newPage: Page = {
@@ -922,7 +1158,7 @@ export default function UltimateWireframeBuilder({
   };
 
   const renamePage = (pageId: string, newName: string) => {
-    setPages(prev => prev.map(p =>
+    setPages(prev => prev.map(p => 
       p.id === pageId ? { ...p, name: newName } : p
     ));
   };
@@ -933,31 +1169,31 @@ export default function UltimateWireframeBuilder({
   const saveWireframe = async () => {
     setIsSaving(true);
     const start = Date.now();
-
+    
     try {
-      const wireframeData = {
-        version: '2.0',
-        timestamp: new Date().toISOString(),
-        projectName,
-        isDarkMode,
+    const wireframeData = {
+      version: '2.0',
+      timestamp: new Date().toISOString(),
+      projectName,
+      isDarkMode,
         pages: pages.map(page => ({ ...page })),
         currentPageId
-      };
+    };
 
       // Save to localStorage as backup
-      localStorage.setItem('currentWireframe', JSON.stringify(wireframeData));
-
-      const savedWireframes = JSON.parse(localStorage.getItem('savedWireframes') || '[]');
-      const existingIndex = savedWireframes.findIndex((w: any) => w.projectName === projectName);
-
-      if (existingIndex >= 0) {
-        savedWireframes[existingIndex] = wireframeData;
-      } else {
-        savedWireframes.push(wireframeData);
-      }
-
-      localStorage.setItem('savedWireframes', JSON.stringify(savedWireframes));
-
+    localStorage.setItem('currentWireframe', JSON.stringify(wireframeData));
+    
+    const savedWireframes = JSON.parse(localStorage.getItem('savedWireframes') || '[]');
+    const existingIndex = savedWireframes.findIndex((w: any) => w.projectName === projectName);
+    
+    if (existingIndex >= 0) {
+      savedWireframes[existingIndex] = wireframeData;
+    } else {
+      savedWireframes.push(wireframeData);
+    }
+    
+    localStorage.setItem('savedWireframes', JSON.stringify(savedWireframes));
+    
       // Save to MongoDB if projectId is available
       if (projectId) {
         const response = await fetch(`/api/projects/${projectId}`, {
@@ -1002,7 +1238,7 @@ export default function UltimateWireframeBuilder({
       pages,
       currentPageId
     };
-
+    
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1063,16 +1299,16 @@ export default function UltimateWireframeBuilder({
 
   const exportAsPDF = async (exportType: 'all' | 'current' | 'selected' = 'all') => {
     if (!canvasRef.current) return;
-   
+    
     try {
       // Show loading state
       setIsSaving(true);
-     
+      
       // Temporarily hide the customization panel for clean export
       const customizer = document.querySelector('[data-customizer]') as HTMLElement;
       const originalDisplay = customizer?.style.display;
       if (customizer) customizer.style.display = 'none';
-     
+      
       // Small delay to ensure all charts are fully rendered
       await new Promise(resolve => setTimeout(resolve, 100));
      
@@ -1118,8 +1354,8 @@ export default function UltimateWireframeBuilder({
         try {
           canvas = await html2canvas(canvasRef.current, {
             background: isDarkMode ? '#111827' : '#ffffff',
-            useCORS: true,
-            allowTaint: true,
+        useCORS: true,
+        allowTaint: true,
             width: canvasRef.current.clientWidth,
             height: canvasRef.current.clientHeight,
             logging: true // Enable logging to debug
@@ -1191,7 +1427,7 @@ export default function UltimateWireframeBuilder({
         filename = `${projectName.replace(/\s+/g, '_')}_presentation.pdf`;
       }
       pdf.save(filename);
-     
+      
     } catch (error) {
       console.error('PDF export failed:', error);
       alert('Failed to export PDF. Please try again.');
@@ -1209,7 +1445,7 @@ export default function UltimateWireframeBuilder({
       try {
         const data = JSON.parse(e.target?.result as string);
         if (data.charts) {
-          setCharts(data.charts);
+          setCharts(data.charts.map((chart: any) => ({ ...chart, comments: chart.comments || [] })));
           setProjectName(data.projectName || 'Loaded Wireframe');
           setIsDarkMode(true); // Always default to dark mode
           setSelectedChart(null);
@@ -1281,7 +1517,7 @@ export default function UltimateWireframeBuilder({
         setSelectedChart(null);
       }
     };
- 
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
@@ -1295,8 +1531,8 @@ export default function UltimateWireframeBuilder({
   const textClass = isDarkMode ? 'text-gray-100' : 'text-gray-900';
   const textSecondaryClass = isDarkMode ? 'text-gray-400' : 'text-gray-600';
   const headerBgClass = isDarkMode ? 'bg-gray-800' : 'bg-white';
-  const inputClass = isDarkMode
-    ? 'bg-gray-700 border-gray-600 text-gray-100'
+  const inputClass = isDarkMode 
+    ? 'bg-gray-700 border-gray-600 text-gray-100' 
     : 'bg-white border-gray-300 text-gray-900';
 
   return (
@@ -1336,348 +1572,293 @@ export default function UltimateWireframeBuilder({
           background: ${isDarkMode ? '#111827' : '#f8fafc'};
         }
       `}</style>
-      <div className={`h-screen ${bgClass} flex`}>
-        {/* Sidebar - Widget Library */}
+    <div className={`h-screen ${bgClass} flex`}>
+      {/* Sidebar - Widget Library */}
         <div className={`w-80 ${sidebarBgClass} border-r ${borderClass} flex flex-col sidebar-scrollbar ${isViewOnly ? 'opacity-60' : ''}`}>
-          {/* Header */}
-          <div className={`p-4 border-b ${borderClass}`}>
-            <div className="mb-16">
-              <h2 className={`text-lg font-semibold ${textClass}`}></h2>
-            </div>
-
-            {/* Professional Tab Navigation */}
+        {/* Header */}
+        <div className={`p-4 border-b ${borderClass}`}>
+          <div className="mb-16">
+            <h2 className={`text-lg font-semibold ${textClass}`}></h2>
+          </div>
+          
+          {/* Professional Tab Navigation */}
             <div className={`flex rounded-lg p-1 mb-4 relative ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
-              }`} style={{ minHeight: '40px' }}>
-              {/* Animated tab indicator */}
-              <div
+          }`} style={{ minHeight: '40px' }}>
+            {/* Animated tab indicator */}
+            <div 
                 className={`absolute top-1 bottom-1 transition-all duration-300 ease-out rounded-md ${isDarkMode ? 'bg-blue-600' : 'bg-white border border-blue-200'
-                  }`}
-                style={{
-                  width: 'calc(33.33% - 2px)',
-                  left: activeTab === 'charts' ? '4px' : activeTab === 'components' ? 'calc(33.33% + 2px)' : 'calc(66.66% + 0px)'
-                }}
-              />
-
-              <button
-                onClick={() => setActiveTab('charts')}
+              }`}
+              style={{
+                width: 'calc(33.33% - 2px)',
+                left: activeTab === 'charts' ? '4px' : activeTab === 'components' ? 'calc(33.33% + 2px)' : 'calc(66.66% + 0px)'
+              }}
+            />
+            
+            <button
+              onClick={() => setActiveTab('charts')}
                 className={`relative z-10 flex-1 px-2 py-2 text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1 ${activeTab === 'charts'
-                    ? isDarkMode
-                      ? 'text-white'
-                      : 'text-blue-600'
-                    : isDarkMode
-                      ? 'text-gray-400 hover:text-gray-200'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-              >
-                <BarChart3 className="w-3 h-3" />
-                Charts
-              </button>
-              <button
-                onClick={() => setActiveTab('components')}
+                  ? isDarkMode
+                    ? 'text-white'
+                    : 'text-blue-600'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-200'
+                    : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <BarChart3 className="w-3 h-3" />
+              Charts
+            </button>
+            <button
+              onClick={() => setActiveTab('components')}
                 className={`relative z-10 flex-1 px-2 py-2 text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1 ${activeTab === 'components'
-                    ? isDarkMode
-                      ? 'text-white'
-                      : 'text-blue-600'
-                    : isDarkMode
-                      ? 'text-gray-400 hover:text-gray-200'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-              >
-                <Table className="w-3 h-3" />
-                Components
-              </button>
-
-              <button
-                onClick={() => setActiveTab('slides')}
+                  ? isDarkMode
+                    ? 'text-white'
+                    : 'text-blue-600'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-200'
+                    : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Table className="w-3 h-3" />
+              Components
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('slides')}
                 className={`relative z-10 flex-1 px-2 py-2 text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1 ${activeTab === 'slides'
-                    ? isDarkMode
-                      ? 'text-white'
-                      : 'text-blue-600'
-                    : isDarkMode
-                      ? 'text-gray-400 hover:text-gray-200'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-              >
-                <Layers className="w-3 h-3" />
-                Slides
-              </button>
-            </div>
-
-            <p className={`text-sm ${textSecondaryClass}`}>
-              {activeTab === 'charts'
-                ? 'Drag charts to the canvas to visualize your data'
-                : activeTab === 'components'
-                  ? 'Drag components to build your interface'
-                  : 'Manage your presentation slides'
-              }
-            </p>
-          </div>
-
-          {/* Widget Templates */}
-          <div className="flex-1 p-4 overflow-y-auto max-h-[calc(100vh-280px)]">
-            {activeTab === 'slides' ? (
-              /* Slides Management */
-              <div className="space-y-4">
-                {/* Add New Slide Button */}
-                <button
-                  onClick={addNewPage}
-                  className={`w-full px-4 py-3 rounded-lg transition-colors flex items-center gap-2 ${isDarkMode
-                      ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30'
-                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                    }`}
-                >
-                  <Plus className="w-5 h-5" />
-                  Slides
-                </button>
-
-                {/* Current Page Info */}
-                <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-                  }`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className={`font-medium ${textClass}`}>
-                        {getCurrentPage()?.name || 'Slide 1'}
-                      </div>
-                      <div className={`text-xs ${textSecondaryClass}`}>
-                        {getCurrentPageCharts().length} {getCurrentPageCharts().length === 1 ? 'element' : 'elements'}
-                      </div>
-                    </div>
-                    <div className={`text-xs ${textSecondaryClass}`}>
-                      {pages.length} {pages.length === 1 ? 'slide' : 'slides'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Slides List */}
-                <div className="space-y-2">
-                  {pages.map((page, index) => (
-                    <div
-                      key={page.id}
-                      className={`p-3 rounded-lg border transition-colors cursor-pointer ${page.id === currentPageId
-                          ? isDarkMode
-                            ? 'bg-blue-900/30 border-blue-600 text-blue-400'
-                            : 'bg-blue-100 border-blue-300 text-blue-700'
-                          : isDarkMode
-                            ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
-                            : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
-                        }`}
-                      onClick={() => switchToPage(page.id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium ${page.id === currentPageId
-                              ? isDarkMode
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-blue-500 text-white'
-                              : isDarkMode
-                                ? 'bg-gray-600 text-gray-300'
-                                : 'bg-gray-400 text-white'
-                            }`}>
-                            {index + 1}
-                          </div>
-                          <div>
-                            <div className="font-medium">{page.name}</div>
-                            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                              }`}>
-                              {page.charts.length} {page.charts.length === 1 ? 'element' : 'elements'}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Page Actions */}
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              duplicatePage(page.id);
-                            }}
-                            className={`p-1 rounded transition-colors ${isDarkMode
-                                ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-300'
-                                : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'
-                              }`}
-                            title="Duplicate slide"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </button>
-
-                          {pages.length > 1 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deletePage(page.id);
-                              }}
-                              className={`p-1 rounded transition-colors ${isDarkMode
-                                  ? 'hover:bg-red-900/30 text-gray-400 hover:text-red-400'
-                                  : 'hover:bg-red-100 text-gray-500 hover:text-red-600'
-                                }`}
-                              title="Delete slide"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              /* Charts and Components */
-              <div className="grid grid-cols-2 gap-3">
-                {(activeTab === 'charts' ? getChartTemplates() : getComponentTemplates()).map((template) => {
-                  const IconComponent = template.icon;
-                  const colors = {
-                    bar: 'blue',
-                    donut: 'purple',
-                    line: 'green',
-                    area: 'orange',
-                    combo: 'cyan',
-                    multibar: 'teal',
-                    table: 'indigo',
-                    button: 'slate',
-                    input: 'emerald',
-                    text: 'amber',
-                    image: 'rose',
-                    card: 'violet',
-                    navigation: 'sky',
-                    dropdown: 'lime',
-                    checkbox: 'pink',
-                    progress: 'orange',
-                    alert: 'red',
-                    avatar: 'blue',
-                    badge: 'green',
-                    switch: 'purple',
-                    slider: 'indigo',
-                    textarea: 'gray',
-                    separator: 'slate'
-                  };
-                  const color = colors[template.type] || 'blue';
-
-                  return (
-                    <button
-                      key={template.type}
-                      onMouseDown={(e) => handleSidebarMouseDown(e, template)}
-                      className={`relative p-4 border-2 border-dashed rounded-xl transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
-                          ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
-                          : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-                        }`}
-                    >
-                      {/* Usage count badge */}
-                      {charts.filter(c => c.type === template.type).length > 0 && (
-                        <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isDarkMode
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-blue-500 text-white'
-                          }`}>
-                          {charts.filter(c => c.type === template.type).length}
-                        </div>
-                      )}
-
-                      <div className="text-center space-y-3">
-                        <div className={`mx-auto w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 ${isDarkMode
-                            ? `bg-${color}-900/20 group-hover:bg-${color}-900/30`
-                            : `bg-${color}-100 group-hover:bg-${color}-200`
-                          }`}>
-                          <IconComponent className={`w-6 h-6 text-${color}-500 transition-colors`} />
-                        </div>
-                        <div>
-                          <h3 className={`font-medium text-sm ${textClass} group-hover:text-${color}-600 transition-colors`}>{template.name}</h3>
-                          <p className={`text-xs ${textSecondaryClass} mt-1`}>
-                            {template.type === 'bar' && 'Compare values'}
-                            {template.type === 'donut' && 'Show proportions'}
-                            {template.type === 'line' && 'Track trends'}
-                            {template.type === 'area' && 'Filled trends'}
-                            {template.type === 'combo' && 'Bar + Line combo'}
-                            {template.type === 'multibar' && 'Multiple data series'}
-                            {template.type === 'table' && 'Structured data'}
-                            {template.type === 'button' && 'Interactive button'}
-                            {template.type === 'input' && 'Text input field'}
-                            {template.type === 'text' && 'Text labels'}
-                            {template.type === 'image' && 'Image placeholder'}
-                            {template.type === 'card' && 'Content card'}
-                            {template.type === 'navigation' && 'Navigation bar'}
-                            {template.type === 'dropdown' && 'Select dropdown'}
-                            {template.type === 'checkbox' && 'Checkbox option'}
-                            {template.type === 'progress' && 'Progress indicator'}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Widget Summary */}
-            {getCurrentPageCharts().length > 0 && (
-              <div className={`mt-6 p-4 rounded-xl border ${isDarkMode ? 'border-gray-600 bg-gray-800/50' : 'border-gray-200 bg-gray-50'
-                }`}>
-                <h4 className={`font-medium mb-2 ${textClass}`}>
-                  {activeTab === 'charts' ? 'Chart Summary' : activeTab === 'components' ? 'Component Summary' : 'Slide Summary'}
-                </h4>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {activeTab === 'charts' ? (
-                    // Chart counts
-                    ['bar', 'donut', 'line', 'area', 'combo', 'multibar'].map(type => {
-                      const count = getCurrentPageCharts().filter(c => c.type === type).length;
-                      return count > 0 ? (
-                        <div key={type} className={`flex justify-between ${textSecondaryClass}`}>
-                          <span className="capitalize">{type}:</span>
-                          <span>{count}</span>
-                        </div>
-                      ) : null;
-                    })
-                  ) : (
-                    // Component counts
-                    ['table'].map(type => {
-                      const count = getCurrentPageCharts().filter(c => c.type === type).length;
-                      return count > 0 ? (
-                        <div key={type} className={`flex justify-between ${textSecondaryClass}`}>
-                          <span className="capitalize">{type}:</span>
-                          <span>{count}</span>
-                        </div>
-                      ) : null;
-                    })
-                  )}
-                </div>
-
-                {/* Total count with context */}
-                <div className={`mt-3 pt-3 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-200'
-                  }`}>
-                  <div className={`flex justify-between font-medium ${textClass}`}>
-                    <span>Total {activeTab}:</span>
-                    <span>{activeTab === 'charts'
-                      ? getCurrentPageCharts().filter(c => ['bar', 'donut', 'line', 'area', 'combo', 'multibar'].includes(c.type)).length
-                      : getCurrentPageCharts().filter(c => ['table', 'button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'progress'].includes(c.type)).length
-                    }</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className={`p-6 border-t ${borderClass}`}>
-            <div className={`text-sm text-center ${textSecondaryClass}`}>
-              {activeTab === 'charts'
-                ? `${getCurrentPageCharts().filter(c => ['bar', 'donut', 'line', 'area', 'combo', 'multibar'].includes(c.type)).length} chart${getCurrentPageCharts().filter(c => ['bar', 'donut', 'line', 'area', 'combo', 'multibar'].includes(c.type)).length !== 1 ? 's' : ''} added`
-                : activeTab === 'components'
-                  ? `${getCurrentPageCharts().filter(c => ['table', 'button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'progress'].includes(c.type)).length} component${getCurrentPageCharts().filter(c => ['table', 'button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'progress'].includes(c.type)).length !== 1 ? 's' : ''} added`
-                  : `${pages.length} ${pages.length === 1 ? 'slide' : 'slides'} total`
-              }
-            </div>
+                  ? isDarkMode
+                    ? 'text-white'
+                    : 'text-blue-600'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-200'
+                    : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Layers className="w-3 h-3" />
+              Slides
+            </button>
           </div>
         </div>
 
-        {/* Main Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <div className={`${headerBgClass} border-b ${borderClass} p-4`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <input
-                  type="text"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
+        {/* Widget Templates */}
+        <div className="flex-1 pt-4 px-4 pb-0 overflow-y-auto max-h-[calc(100vh-280px)]">
+          {activeTab === 'slides' ? (
+            /* Slides Management */
+            <div className="space-y-4">
+              {/* Add New Slide Button */}
+              <button
+                onClick={addNewPage}
+                  className={`w-full px-4 py-3 rounded-lg transition-colors flex items-center gap-2 ${isDarkMode
+                    ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30'
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                }`}
+              >
+                <Plus className="w-5 h-5" />
+                Slides
+              </button>
+
+              {/* Current Page Info */}
+                <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className={`font-medium ${textClass}`}>
+                      {getCurrentPage()?.name || 'Slide 1'}
+                    </div>
+                    <div className={`text-xs ${textSecondaryClass}`}>
+                      {getCurrentPageCharts().length} {getCurrentPageCharts().length === 1 ? 'element' : 'elements'}
+                    </div>
+                  </div>
+                  <div className={`text-xs ${textSecondaryClass}`}>
+                    {pages.length} {pages.length === 1 ? 'slide' : 'slides'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Slides List */}
+              <div className="space-y-2">
+                {pages.map((page, index) => (
+                  <div
+                    key={page.id}
+                      className={`p-3 rounded-lg border transition-colors cursor-pointer ${page.id === currentPageId
+                        ? isDarkMode
+                          ? 'bg-blue-900/30 border-blue-600 text-blue-400'
+                          : 'bg-blue-100 border-blue-300 text-blue-700'
+                        : isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                    }`}
+                    onClick={() => switchToPage(page.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium ${page.id === currentPageId
+                            ? isDarkMode
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-blue-500 text-white'
+                            : isDarkMode
+                              ? 'bg-gray-600 text-gray-300'
+                              : 'bg-gray-400 text-white'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div>
+                          <div className="font-medium">{page.name}</div>
+                            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            {page.charts.length} {page.charts.length === 1 ? 'element' : 'elements'}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Page Actions */}
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            duplicatePage(page.id);
+                          }}
+                            className={`p-1 rounded transition-colors ${isDarkMode
+                              ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-300'
+                              : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'
+                          }`}
+                          title="Duplicate slide"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                        
+                        {pages.length > 1 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deletePage(page.id);
+                            }}
+                              className={`p-1 rounded transition-colors ${isDarkMode
+                                ? 'hover:bg-red-900/30 text-gray-400 hover:text-red-400'
+                                : 'hover:bg-red-100 text-gray-500 hover:text-red-600'
+                            }`}
+                            title="Delete slide"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+          <div>
+            {/* Charts and Components */}
+            <div className="grid grid-cols-2 gap-1">
+            {(activeTab === 'charts' ? getChartTemplates() : getComponentTemplates()).map((template) => {
+              const IconComponent = template.icon;
+              const colors = {
+                bar: 'blue',
+                donut: 'purple',
+                line: 'green',
+                area: 'orange',
+                combo: 'cyan',
+                multibar: 'teal',
+                table: 'indigo',
+                button: 'slate',
+                iconbutton: 'slate',
+                input: 'emerald',
+                text: 'amber',
+                image: 'rose',
+                card: 'violet',
+                navigation: 'sky',
+                dropdown: 'lime',
+                checkbox: 'pink',
+                    radio: 'emerald',
+                progress: 'orange',
+                alert: 'red',
+                avatar: 'blue',
+                badge: 'green',
+                switch: 'purple',
+                slider: 'indigo',
+                textarea: 'gray',
+                separator: 'slate'
+              };
+              const color = colors[template.type] || 'blue';
+              
+              return (
+                <button
+                  key={template.type}
+                      onMouseDown={(e) => handleSidebarMouseDown(e, template)}
+                      className={`relative p-2 border-2 border-dashed rounded-lg transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
+                      ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                      : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="text-center space-y-3">
+                        <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${isDarkMode
+                        ? `bg-${color}-900/20 group-hover:bg-${color}-900/30`
+                        : `bg-${color}-100 group-hover:bg-${color}-200`
+                    }`}>
+                          <IconComponent className={`w-4 h-4 text-${color}-500 transition-colors`} />
+                    </div>
+                    <div>
+                      <h3 className={`font-medium text-[11px] ${textClass} group-hover:text-${color}-600 transition-colors`}>{template.name}</h3>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+            </div>
+
+          {/* Icon Buttons Section */}
+          <div className="mt-4">
+            <div className={`text-xs font-medium mb-2 uppercase tracking-wide ${textSecondaryClass}`}>Icon Buttons</div>
+            <div className="grid grid-cols-2 gap-1">
+              {getIconTemplates().map((template) => {
+                const IconComponent = template.icon;
+                const color = 'slate';
+                return (
+                  <button
+                    key={`icon-${template.name}`}
+                    onMouseDown={(e) => handleSidebarMouseDown(e, template)}
+                    className={`relative p-2 border-2 border-dashed rounded-lg transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
+                      ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                      : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-center space-y-3">
+                      <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${isDarkMode
+                        ? `bg-${color}-900/20 group-hover:bg-${color}-900/30`
+                        : `bg-${color}-100 group-hover:bg-${color}-200`
+                      }`}>
+                        <IconComponent className={`w-4 h-4 text-${color}-500 transition-colors`} />
+                      </div>
+                      <div>
+                        <h3 className={`font-medium text-[11px] ${textClass}`}>{template.name}</h3>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          </div>
+          )}
+          
+          {/* Widget Summary removed */}
+        </div>
+
+        {/* Footer removed */}
+      </div>
+
+      {/* Main Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className={`${headerBgClass} border-b ${borderClass} p-4`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <input
+                type="text"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
                   disabled={isViewOnly}
                   className={`text-lg font-medium bg-transparent border-none outline-none focus:bg-opacity-50 px-2 py-1 rounded transition-all duration-200 ${inputClass} ${isViewOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
                 />
@@ -1686,9 +1867,9 @@ export default function UltimateWireframeBuilder({
                     {isViewOnly ? '👁️ View Only' : '✏️ Can Edit'}
                   </div>
                 )}
-              </div>
+            </div>
 
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
                 {/* Fixframe AI Button */}
                 <button
                   onClick={() => setShowFixframeAI(true)}
@@ -1702,9 +1883,9 @@ export default function UltimateWireframeBuilder({
                   <Sparkles className="w-3 h-3" />
                   Fixframe AI
                 </button>
+             
 
-
-                <button
+              <button
                 onClick={saveWireframe}
                 disabled={isSaving || isViewOnly}
                 className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
@@ -1740,7 +1921,7 @@ export default function UltimateWireframeBuilder({
                 <Share2 className="w-4 h-4" />
                 Share
               </button>
- 
+
               {/* Export Options */}
               <div className="flex items-center gap-1">
                 <button
@@ -1772,7 +1953,7 @@ export default function UltimateWireframeBuilder({
                 {/* Export Options */}
                 <div className="flex items-center gap-1">
                 
-                  <button
+                <button
                     onClick={() => {
                       console.log('UltimateWireframeBuilder: Code button clicked, setting showCodeModal to true');
                       setShowCodeModal(true);
@@ -1786,211 +1967,271 @@ export default function UltimateWireframeBuilder({
                   >
                     <Code className="w-3 h-3" />
                     Code
-                  </button>
-                </div>
-
-                
-
+                </button>
               </div>
+
+
+
             </div>
           </div>
+        </div>
 
-          {/* Canvas */}
-          <div
-            ref={canvasRef}
-            className={`flex-1 relative overflow-auto ${bgClass} ${draggedChart ? 'select-none' : ''}`}
+        {/* Canvas */}
+        <div
+          ref={canvasRef}
+          className={`flex-1 relative overflow-auto ${bgClass} ${draggedChart ? 'select-none' : ''}`}
+          style={{
+            height: 'calc(100vh - 120px)'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedChart(null);
+            }
+          }}
+        >
+          {/* Grid Background */}
+          <div 
+            className="absolute inset-0 opacity-30 pointer-events-none"
             style={{
-              height: 'calc(100vh - 120px)'
-            }}
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setSelectedChart(null);
-              }
-            }}
-          >
-            {/* Grid Background */}
-            <div
-              className="absolute inset-0 opacity-30 pointer-events-none"
-              style={{
-                backgroundImage: `
+              backgroundImage: `
                 linear-gradient(to right, ${isDarkMode ? '#374151' : '#e5e7eb'} 1px, transparent 1px),
                 linear-gradient(to bottom, ${isDarkMode ? '#374151' : '#e5e7eb'} 1px, transparent 1px)
               `,
-                backgroundSize: '24px 24px'
-              }}
-            />
+              backgroundSize: '24px 24px'
+            }}
+          />
 
-            {/* Empty State Placeholder */}
-            {getCurrentPageCharts().length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          {/* Empty State Placeholder */}
+          {getCurrentPageCharts().length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className={`text-center p-8 rounded-xl border-2 border-dashed ${isDarkMode
-                    ? 'border-gray-600 bg-gray-800/30'
-                    : 'border-gray-300 bg-gray-50/50'
-                  }`}>
-                  <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${isDarkMode
-                      ? 'bg-gray-700 text-gray-400'
-                      : 'bg-gray-100 text-gray-500'
-                    }`}>
-                    <Grid className="w-8 h-8" />
-                  </div>
-                  <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
-                    }`}>
-                    Start building your wireframe
-                  </h3>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                    Drag charts and components from the sidebar to get started
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Charts */}
-            {getCurrentPageCharts().map((chart) => {
-              const isBeingDragged = draggedChart === chart.id;
-              const commonProps = {
-                id: chart.id,
-                title: chart.title,
-                data: chart.data,
-                x: chart.x,
-                y: chart.y,
-                width: chart.width,
-                height: chart.height,
-                isSelected: selectedChart === chart.id,
-                onSelect: setSelectedChart,
-                onUpdate: updateChart,
-                onDelete: deleteChart,
-                titleColor: chart.titleColor,
-                titleSize: chart.titleSize,
-                titleWeight: chart.titleWeight,
-                isDarkMode
-              };
-
-              return (
-                <div
-                  key={chart.id}
-                  onMouseDown={(e) => handleMouseDown(e, chart.id)}
-                  className={`relative transition-opacity duration-150 ${isBeingDragged ? 'opacity-75 z-50' : 'z-10'}`}
-                  style={{
-                    cursor: draggedChart === chart.id ? 'grabbing' : 'grab'
-                  }}
-                >
-                  {/* Comment Indicator */}
-                  {chart.comments.length > 0 && (
-                    <div
-                      className="absolute -top-2 -right-2 z-20"
-                      style={{ pointerEvents: 'none' }}
-                    >
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${chart.comments.some(c => !c.resolved)
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-green-500 text-white'
-                        }`}>
-                        {chart.comments.length}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Chart Component */}
-                  {chart.type === 'bar' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
-                    <DarkModeBarChart {...commonProps} type="bar" data={chart.data as { name: string; value: number; color: string }[]} />
-                  ) : chart.type === 'donut' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
-                    <DarkModeDonutChart {...commonProps} type="donut" data={chart.data as { name: string; value: number; color: string }[]} />
-                  ) : chart.type === 'line' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
-                    <RechartsLineChart {...commonProps} type="line" data={chart.data as { name: string; value: number; color: string }[]} />
-                  ) : chart.type === 'area' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
-                    <RechartsAreaChart {...commonProps} type="area" data={chart.data as { name: string; value: number; color: string }[]} />
-                  ) : chart.type === 'combo' && Array.isArray(chart.data) && chart.data.length > 0 && 'barValue' in chart.data[0] ? (
-                    <ShadcnComboChart {...commonProps} type="combo" data={chart.data as { name: string; barValue: number; lineValue: number; barColor?: string; lineColor?: string }[]} />
-                  ) : chart.type === 'multibar' && Array.isArray(chart.data) && chart.data.length > 0 && 'series1' in chart.data[0] ? (
-                    <ShadcnMultiBarChart {...commonProps} data={chart.data as MultiBarChartData[]} />
-                  ) : chart.type === 'table' && !Array.isArray(chart.data) ? (
-                    <ShadcnTable {...commonProps} type="table" data={chart.data} />
-                  ) : chart.type === 'button' ? (
-                    <WireframeButton {...commonProps} />
-                  ) : chart.type === 'input' ? (
-                    <WireframeInput {...commonProps} />
-                  ) : chart.type === 'text' ? (
-                    <WireframeText {...commonProps} />
-                  ) : chart.type === 'image' ? (
-                    <WireframeImage {...commonProps} />
-                  ) : chart.type === 'card' ? (
-                    <WireframeCard {...commonProps} />
-                  ) : chart.type === 'navigation' ? (
-                    <WireframeNavigation {...commonProps} />
-                  ) : chart.type === 'dropdown' ? (
-                    <WireframeDropdown {...commonProps} />
-                  ) : chart.type === 'checkbox' ? (
-                    <WireframeCheckbox {...commonProps} />
-                  ) : chart.type === 'progress' ? (
-                    <WireframeProgress {...commonProps} />
-                  ) : chart.type === 'alert' ? (
-                    <WireframeAlert {...commonProps} />
-                  ) : chart.type === 'avatar' ? (
-                    <WireframeAvatar {...commonProps} />
-                  ) : chart.type === 'badge' ? (
-                    <WireframeBadge {...commonProps} />
-                  ) : chart.type === 'switch' ? (
-                    <WireframeSwitch {...commonProps} />
-                  ) : chart.type === 'slider' ? (
-                    <WireframeSlider {...commonProps} />
-                  ) : chart.type === 'textarea' ? (
-                    <WireframeTextarea {...commonProps} />
-                  ) : chart.type === 'separator' ? (
-                    <WireframeSeparator {...commonProps} />
-                  ) : (
-                    // Fallback for debugging
-                    <div
-                      className="absolute bg-red-100 border-2 border-red-500 p-4 rounded-lg"
-                      style={{ left: chart.x, top: chart.y, width: chart.width, height: chart.height }}
-                    >
-                      <div className="text-red-600 font-bold">Debug: Chart type: {chart.type}</div>
-                      <div className="text-red-600">Data type: {Array.isArray(chart.data) ? 'Array' : 'Object'}</div>
-                      {Array.isArray(chart.data) && (
-                        <div className="text-red-600">Data length: {chart.data.length}</div>
-                      )}
-                      {Array.isArray(chart.data) && chart.data.length > 0 && (
-                        <div className="text-red-600">First item keys: {Object.keys(chart.data[0]).join(', ')}</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-          </div>
-
-          {/* Instructions */}
-          {charts.length > 0 && (
-            <div className={`border-t p-3 ${isDarkMode
-                ? 'bg-blue-900/20 border-blue-700/50'
-                : 'bg-blue-50 border-blue-200'
+                  ? 'border-gray-600 bg-gray-800/30' 
+                  : 'border-gray-300 bg-gray-50/50'
               }`}>
-              <div className={`text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-700'
+                  <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${isDarkMode
+                    ? 'bg-gray-700 text-gray-400' 
+                    : 'bg-gray-100 text-gray-500'
                 }`}>
-                <strong>💡 Tips:</strong> Click charts to customize • Drag to reposition • Ctrl+E for PDF export • Perfect for client presentations
+                  <Grid className="w-8 h-8" />
+                </div>
+                  <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                }`}>
+                  Start building your wireframe
+                </h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  Drag charts and components from the sidebar to get started
+                </p>
               </div>
             </div>
           )}
-        </div>
 
-        {/* Customization Panel */}
+          {/* Charts */}
+          {getCurrentPageCharts().map((chart) => {
+            const isBeingDragged = draggedChart === chart.id;
+            const commonProps = {
+              id: chart.id,
+              title: chart.title,
+              data: chart.data,
+                x: 0,
+                y: 0,
+              width: chart.width,
+              height: chart.height,
+              isSelected: selectedChart === chart.id,
+              onSelect: setSelectedChart,
+              onUpdate: updateChart,
+              onDelete: deleteChart,
+              titleColor: chart.titleColor,
+              titleSize: chart.titleSize,
+              titleWeight: chart.titleWeight,
+              isDarkMode
+            };
+
+            return (
+              <div
+                key={chart.id}
+                onMouseDown={(e) => handleMouseDown(e, chart.id)}
+                className={`relative transition-opacity duration-150 ${isBeingDragged ? 'opacity-75 z-50' : 'z-10'}`}
+                style={{ 
+                    position: 'absolute',
+                    left: chart.x,
+                    top: chart.y,
+                    width: chart.width,
+                    height: chart.height,
+                  cursor: draggedChart === chart.id ? 'grabbing' : 'grab'
+                }}
+              >
+                {/* Comment Indicator */}
+                  {chart.comments && chart.comments.length > 0 && (
+                  <div 
+                    className="absolute -top-2 -right-2 z-20"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${chart.comments && chart.comments.some(c => !c.resolved)
+                        ? 'bg-orange-500 text-white' 
+                        : 'bg-green-500 text-white'
+                    }`}>
+                        {chart.comments ? chart.comments.length : 0}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Chart Component */}
+                {chart.type === 'bar' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                  <DarkModeBarChart {...commonProps} type="bar" data={chart.data as { name: string; value: number; color: string }[]} />
+                ) : chart.type === 'donut' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                  <DarkModeDonutChart {...commonProps} type="donut" data={chart.data as { name: string; value: number; color: string }[]} />
+                ) : chart.type === 'line' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                  <RechartsLineChart {...commonProps} type="line" data={chart.data as { name: string; value: number; color: string }[]} />
+                ) : chart.type === 'area' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                  <RechartsAreaChart {...commonProps} type="area" data={chart.data as { name: string; value: number; color: string }[]} />
+                ) : chart.type === 'combo' && Array.isArray(chart.data) && chart.data.length > 0 && 'barValue' in chart.data[0] ? (
+                  <ShadcnComboChart {...commonProps} type="combo" data={chart.data as { name: string; barValue: number; lineValue: number; barColor?: string; lineColor?: string }[]} />
+                ) : chart.type === 'multibar' && Array.isArray(chart.data) && chart.data.length > 0 && 'series1' in chart.data[0] ? (
+                  <ShadcnMultiBarChart {...commonProps} data={chart.data as MultiBarChartData[]} />
+                ) : chart.type === 'table' && !Array.isArray(chart.data) ? (
+                  <ShadcnTable {...commonProps} type="table" data={chart.data} />
+                ) : chart.type === 'button' ? (
+                  <WireframeButton {...commonProps} />
+                ) : chart.type === 'iconbutton' ? (
+                  <WireframeIconButton {...commonProps} />
+                ) : chart.type === 'input' ? (
+                  <WireframeInput {...commonProps} />
+                ) : chart.type === 'text' ? (
+                  <WireframeText {...commonProps} />
+                ) : chart.type === 'image' ? (
+                  <WireframeImage {...commonProps} />
+                ) : chart.type === 'card' ? (
+                  <WireframeCard {...commonProps} />
+                ) : chart.type === 'navigation' ? (
+                  <WireframeNavigation {...commonProps} />
+                ) : chart.type === 'dropdown' ? (
+                  <WireframeDropdown {...commonProps} />
+                ) : chart.type === 'checkbox' ? (
+                  <WireframeCheckbox {...commonProps} />
+                ) : chart.type === 'radio' ? (
+                  <WireframeRadioButton {...commonProps} />
+                ) : chart.type === 'progress' ? (
+                  <WireframeProgress {...commonProps} />
+                ) : chart.type === 'alert' ? (
+                  <WireframeAlert {...commonProps} />
+                ) : chart.type === 'avatar' ? (
+                  <WireframeAvatar {...commonProps} />
+                ) : chart.type === 'badge' ? (
+                  <WireframeBadge {...commonProps} />
+                ) : chart.type === 'switch' ? (
+                  <WireframeSwitch {...commonProps} />
+                ) : chart.type === 'slider' ? (
+                  <WireframeSlider {...commonProps} />
+                ) : chart.type === 'textarea' ? (
+                  <WireframeTextarea {...commonProps} />
+                ) : chart.type === 'separator' ? (
+                  <WireframeSeparator {...commonProps} />
+                ) : (
+                  // Fallback for debugging
+                  <div 
+                    className="absolute bg-red-100 border-2 border-red-500 p-4 rounded-lg"
+                    style={{ left: chart.x, top: chart.y, width: chart.width, height: chart.height }}
+                  >
+                    <div className="text-red-600 font-bold">Debug: Chart type: {chart.type}</div>
+                    <div className="text-red-600">Data type: {Array.isArray(chart.data) ? 'Array' : 'Object'}</div>
+                    {Array.isArray(chart.data) && (
+                      <div className="text-red-600">Data length: {chart.data.length}</div>
+                    )}
+                    {Array.isArray(chart.data) && chart.data.length > 0 && (
+                      <div className="text-red-600">First item keys: {Object.keys(chart.data[0]).join(', ')}</div>
+                    )}
+                  </div>
+                )}
+
+                  {/* Resize overlay + handles */}
+                  {selectedChart === chart.id && !isViewOnly && (
+                    <>
+                      {/* Border overlay - no pointer events */}
+                      <div
+                        className="absolute border-2 border-blue-400/60 rounded-md"
+                        style={{ left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 30 }}
+                      />
+                      {/* Handles layer - accepts pointer events */}
+                      <div
+                        className="absolute"
+                        style={{ left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 31 }}
+                      >
+                        {(['nw','ne','se','sw','n','e','s','w'] as const).map(h => {
+                          const size = 8;
+                          const half = Math.floor(size / 2);
+                          return (
+                            <div
+                              key={h}
+                              onMouseDown={(e) => startResize(e, chart.id, h)}
+                              className="absolute bg-blue-500 rounded-full shadow"
+                              style={{
+                                width: size,
+                                height: size,
+                                cursor: `${h}-resize`,
+                                pointerEvents: 'auto',
+                                left:
+                                  h === 'nw' ? `-${half}px` :
+                                  h === 'ne' ? `calc(100% - ${half}px)` :
+                                  h === 'se' ? `calc(100% - ${half}px)` :
+                                  h === 'sw' ? `-${half}px` :
+                                  h === 'e' ? `calc(100% - ${half}px)` :
+                                  h === 'w' ? `-${half}px` :
+                                  `calc(50% - ${half}px)`,
+                                top:
+                                  h === 'nw' ? `-${half}px` :
+                                  h === 'ne' ? `-${half}px` :
+                                  h === 'se' ? `calc(100% - ${half}px)` :
+                                  h === 'sw' ? `calc(100% - ${half}px)` :
+                                  h === 'n' ? `-${half}px` :
+                                  h === 's' ? `calc(100% - ${half}px)` :
+                                  `calc(50% - ${half}px)`,
+                                boxShadow: '0 0 0 2px white'
+                              }}
+                            />
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+              </div>
+            );
+          })}
+
+        </div>
+        
+        {/* Instructions */}
+        {charts.length > 0 && (
+            <div className={`border-t p-3 ${isDarkMode
+              ? 'bg-blue-900/20 border-blue-700/50' 
+              : 'bg-blue-50 border-blue-200'
+          }`}>
+              <div className={`text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-700'
+            }`}>
+              <strong>💡 Tips:</strong> Click charts to customize • Drag to reposition • Ctrl+E for PDF export • Perfect for client presentations
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Customization Panel */}
         <div data-customizer className="scrollbar-hide">
-          <EnhancedChartCustomizer
-            selectedChart={selectedChartData}
-            onUpdateChart={updateChart}
-            isDarkMode={isDarkMode}
-            onToggleTheme={toggleTheme}
-            onAddComment={addComment}
-            onResolveComment={resolveComment}
-            onDeleteComment={deleteComment}
-            onAddReply={addReply}
+        <EnhancedChartCustomizer
+          selectedChart={selectedChartData}
+          onUpdateChart={updateChart}
+          isDarkMode={isDarkMode}
+          onToggleTheme={toggleTheme}
+          onAddComment={addComment}
+          onResolveComment={resolveComment}
+          onDeleteComment={deleteComment}
+          onAddReply={addReply}
             onShowFixframeAI={() => setShowFixframeAI(true)}
             charts={charts}
             projectName={projectName}
             showCodeModal={showCodeModal}
             onShowCodeModal={setShowCodeModal}
-          />
-        </div>
+        />
+      </div>
         {/* Share Modal */}
       <ShareModal
         isOpen={showShareModal}
@@ -2017,7 +2258,7 @@ export default function UltimateWireframeBuilder({
               >
                 <X className="w-5 h-5 text-white" />
               </button>
-            </div>
+    </div>
            
             <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
               Choose what you want to export:

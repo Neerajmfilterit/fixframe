@@ -13,7 +13,8 @@ import {
   Trash2,
   Edit,
   Eye,
-  ArrowLeft
+  ArrowLeft,
+  X
 } from "lucide-react"
  
 interface Project {
@@ -30,7 +31,16 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatus, setFilterStatus] = useState("all")
+  const [showCreatePopup, setShowCreatePopup] = useState(false)
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    description: "",
+    isPublic: false
+  })
+  const [creating, setCreating] = useState(false)
+  const [showDeletePopup, setShowDeletePopup] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
+  const [deleting, setDeleting] = useState(false)
  
   useEffect(() => {
     fetchProjects()
@@ -49,20 +59,47 @@ export default function ProjectsPage() {
       setLoading(false)
     }
   }
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCreating(true)
+    try {
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createForm)
+      })
+      const data = await response.json()
+      if (response.ok) {
+        setShowCreatePopup(false)
+        setCreateForm({ name: "", description: "", isPublic: false })
+        fetchProjects()
+        window.location.href = `/builder?project=${data.project._id}`
+      } else {
+        alert(data.error || "Failed to create project")
+      }
+    } catch (error) {
+      alert("Network error. Please try again.")
+    } finally {
+      setCreating(false)
+    }
+  }
  
   const deleteProject = async (projectId: string) => {
-    if (!confirm("Are you sure you want to delete this project?")) return
- 
+    setDeleting(true)
     try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: "DELETE"
-      })
-     
+      const response = await fetch(`/api/projects/${projectId}`, { method: "DELETE" })
       if (response.ok) {
         setProjects(projects.filter(p => p._id !== projectId))
+        setShowDeletePopup(false)
+        setProjectToDelete(null)
+      } else {
+        console.error("Delete failed")
       }
     } catch (error) {
       console.error("Error deleting project:", error)
+    } finally {
+      setDeleting(false)
     }
   }
  
@@ -73,16 +110,6 @@ export default function ProjectsPage() {
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description.toLowerCase().includes(searchTerm.toLowerCase())
-   
-    if (filterStatus === "all") return matchesSearch
-    if (filterStatus === "recent") {
-      const weekAgo = new Date()
-      weekAgo.setDate(weekAgo.getDate() - 7)
-      return matchesSearch && new Date(project.updatedAt) > weekAgo
-    }
-    if (filterStatus === "public") return matchesSearch && project.isPublic
-    if (filterStatus === "private") return matchesSearch && !project.isPublic
-   
     return matchesSearch
   })
  
@@ -106,57 +133,34 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/workspace"
-                className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all duration-200"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Projects</h1>
-                <p className="text-slate-600 mt-2 font-medium">Manage and organize your wireframe projects</p>
-              </div>
-            </div>
-            <Link
-              href="/workspace/projects/new"
-              className="inline-flex items-center px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors font-medium"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              New Project
-            </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Projects</h1>
+            <p className="text-slate-600 mt-2">Manage and organize your wireframe projects</p>
           </div>
+          <button
+            onClick={() => setShowCreatePopup(true)}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            New project
+          </button>
         </div>
+      </div>
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto">
-        {/* Filters */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8 shadow-sm">
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search projects by name or description..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-transparent text-slate-900 placeholder:text-slate-500 transition-all"
-                />
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Filter className="h-5 w-5 text-slate-500" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-3 border border-slate-300 text-slate-900 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all bg-white"
-              >
-                <option value="all">All Projects</option>
-                <option value="recent">Recent (Last 7 days)</option>
-                <option value="public">Public Projects</option>
-                <option value="private">Private Projects</option>
-              </select>
+        {/* Search + Filters */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-8 shadow-sm">
+          <div className="flex flex-col gap-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search projects by name or description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-transparent text-slate-900 placeholder:text-slate-500 transition-all"
+              />
             </div>
           </div>
         </div>
@@ -194,20 +198,16 @@ export default function ProjectsPage() {
                 className="bg-white border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-lg transition-all duration-300"
               >
                 <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-slate-900 mb-2 line-clamp-1">
-                        {project.name}
-                      </h3>
-                      <p className="text-sm text-slate-600 line-clamp-2 mb-4 leading-relaxed">
-                        {project.description || "No description provided"}
-                      </p>
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-lg font-semibold text-slate-900 line-clamp-1">{project.name}</h3>
+                      <span className={`text-xs px-2 py-0.5 rounded-full border ${project.isPublic ? "bg-green-50 text-green-700 border-green-200" : "bg-slate-50 text-slate-700 border-slate-200"}`}>
+                        {project.isPublic ? "Public" : "Private"}
+                      </span>
                     </div>
-                    <div className="relative">
-                      <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                      {project.description || "No description provided"}
+                    </p>
                   </div>
  
                   <div className="flex items-center justify-between text-xs text-slate-500 mb-6">
@@ -215,9 +215,15 @@ export default function ProjectsPage() {
                       <Calendar className="h-3 w-3 mr-2" />
                       <span className="font-medium">Created {formatDate(project.createdAt)}</span>
                     </div>
-                    <div className="flex items-center">
-                      <BarChart3 className="h-3 w-3 mr-2" />
-                      <span className="font-medium">{project.charts.length} charts</span>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center">
+                        <BarChart3 className="h-3 w-3 mr-2" />
+                        <span className="font-medium">{project.charts.length} charts</span>
+                      </div>
+                      <div className="hidden sm:flex items-center">
+                        <Clock className="h-3 w-3 mr-2" />
+                        <span className="font-medium">Updated {formatDate(project.updatedAt)}</span>
+                      </div>
                     </div>
                   </div>
  
@@ -225,21 +231,13 @@ export default function ProjectsPage() {
                     <div className="flex items-center space-x-3">
                       <Link
                         href={`/builder?project=${project._id}`}
-                        className="px-4 py-2 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+                        className="px-4 py-2 text-sm bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
                       >
-                        <Eye className="h-4 w-4 mr-2 inline" />
                         Open
-                      </Link>
-                      <Link
-                        href={`/preview?project=${project._id}`}
-                        className="px-4 py-2 text-sm border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
-                      >
-                        <Eye className="h-4 w-4 mr-2 inline" />
-                        Preview
                       </Link>
                     </div>
                     <button
-                      onClick={() => deleteProject(project._id)}
+                      onClick={() => { setProjectToDelete(project); setShowDeletePopup(true) }}
                       className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -252,6 +250,125 @@ export default function ProjectsPage() {
         )}
       </div>
  
+      {/* Create Project Modal */}
+      {showCreatePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <Plus className="h-6 w-6 text-slate-700" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-slate-900">Create New Project</h3>
+                  <p className="text-sm text-slate-600">Start building your wireframe</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCreatePopup(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateProject} className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">
+                  Project Name
+                </label>
+                <input
+                  type="text"
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all"
+                  placeholder="Enter project name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">
+                  Description
+                </label>
+                <textarea
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none transition-all"
+                  placeholder="Describe your project goals and requirements..."
+                  rows={4}
+                  required
+                />
+              </div>
+
+              <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl">
+                <input
+                  type="checkbox"
+                  id="isPublic"
+                  checked={createForm.isPublic}
+                  onChange={(e) => setCreateForm({ ...createForm, isPublic: e.target.checked })}
+                  className="h-4 w-4 text-slate-600 focus:ring-slate-500 border-slate-300 rounded"
+                />
+                <label htmlFor="isPublic" className="text-sm text-slate-700 font-medium">
+                  Make this project public
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end space-x-4 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowCreatePopup(false)}
+                  className="px-6 py-3 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating || !createForm.name.trim()}
+                  className="px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {creating ? "Creating..." : "Create Project"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeletePopup && projectToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-slate-900">Delete project</h3>
+              <button
+                onClick={() => { setShowDeletePopup(false); setProjectToDelete(null) }}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-slate-600 mb-6">
+              Are you sure you want to delete “<span className="font-medium text-slate-900">{projectToDelete.name}</span>”? This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => { setShowDeletePopup(false); setProjectToDelete(null) }}
+                className="px-5 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteProject(projectToDelete._id)}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

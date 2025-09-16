@@ -6,7 +6,8 @@ import {
   Search, User, Settings, Home, MessageSquare, Bell,
   AlertTriangle, UserCircle, Tag, ToggleLeft, ToggleRight,
   Sliders, FileText, Minus as DividerIcon, HelpCircle,
-  Circle, Dot
+  Circle, Dot, Save, Download, Upload, Share2, Edit3,
+  Copy, Code, FolderOpen, Eye, EyeOff, Grid, Plus, Moon, Sun
 } from 'lucide-react';
 
 // Base interface for all wireframe components
@@ -425,6 +426,7 @@ export function WireframeCheckbox({
   );
 }
 
+
 // Progress Bar Component
 export function WireframeProgress({
   id, title, x, y, width, height, isSelected = false,
@@ -783,6 +785,64 @@ export function WireframeSeparator({
             backgroundColor: data?.color || (isDarkMode ? '#4B5563' : '#D1D5DB')
           }}
         />
+      </div>
+
+      {isSelected && onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(id);
+          }}
+          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition-colors shadow-md flex items-center justify-center"
+          title="Delete"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Icon Button Component
+export function WireframeIconButton({
+  id, title, x, y, width, height, isSelected = false,
+  onSelect, onDelete, isDarkMode = false, data
+}: WireframeComponentProps) {
+  const selectedBorderClass = isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-transparent';
+  const iconName = data?.icon || 'Save';
+  const bgColor = data?.bgColor; // default none (transparent)
+  const borderColor = data?.borderColor; // default none
+  const borderWidth = typeof data?.borderWidth === 'number' ? data.borderWidth : 0; // default none
+  const borderRadius = typeof data?.borderRadius === 'number' ? data.borderRadius : 0; // default square
+  const iconColor = data?.color || (isDarkMode ? '#E5E7EB' : '#111827');
+
+  const iconMap: Record<string, React.ComponentType<any>> = {
+    Save, Download, Upload, Share: Share2, Edit: Edit3, Delete: Trash2, Copy, Tag,
+    User: UserCircle, Code, Folder: FolderOpen, File: FileText, Eye, EyeOff, Grid,
+    Plus, Moon, Sun
+  };
+  const IconComp = iconMap[iconName] || Save;
+
+  return (
+    <div
+      className={`absolute border-2 transition-all duration-200 ${selectedBorderClass} rounded-lg`}
+      style={{ left: x, top: y, width, height }}
+      onClick={() => onSelect?.(id)}
+    >
+      <div className="w-full h-full flex items-center justify-center p-0">
+        <div
+          className="w-full h-full flex items-center justify-center"
+          style={{
+            backgroundColor: bgColor || 'transparent',
+            border: borderWidth && borderColor ? `${borderWidth}px solid ${borderColor}` : 'none',
+            borderRadius
+          }}
+        >
+          {(() => {
+            const size = Math.max(8, Math.floor(Math.min(width, height) * 0.8));
+            return <IconComp style={{ width: size, height: size, color: iconColor }} />;
+          })()}
+        </div>
       </div>
 
       {isSelected && onDelete && (

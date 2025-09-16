@@ -31,13 +31,13 @@ export interface Project {
 
 export interface Chart {
   id: string
-  type: 'bar' | 'donut' | 'line' | 'pie' | 'area'
+  type: 'bar' | 'donut' | 'line' | 'pie' | 'area' | 'combo' | 'card' | 'table' | 'button' | 'input' | 'text' | 'image' | 'navigation' | 'dropdown' | 'checkbox' | 'progress' | 'multibar' | 'radio'
   title: string
   x: number
   y: number
   width: number
   height: number
-  data: ChartData[]
+  data: ChartData[] | any
   titleColor: string
   titleSize: number
   backgroundColor?: string
@@ -46,6 +46,8 @@ export interface Chart {
   borderRadius?: number
   shadow?: boolean
   animation?: boolean
+  comments?: Comment[]
+  pageId?: string
 }
 
 export interface ChartData {
@@ -53,6 +55,15 @@ export interface ChartData {
   value: number
   color: string
   label?: string
+}
+
+export interface Comment {
+  id: string
+  author: string
+  content: string
+  timestamp: string
+  resolved: boolean
+  replies?: Comment[]
 }
 
 export interface ProjectTemplate {

@@ -121,14 +121,16 @@ export default function ShadcnMultiBarChart({
 
   return (
     <div
-      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-200 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''}`}
-      style={{ 
-        left: x, 
-        top: y, 
-        width: width, 
-        height: height
-      }}
+      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-150 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''} overflow-hidden`}
+      style={{ left: x, top: y, width, height, willChange: 'width, height' }}
       onClick={() => onSelect?.(id)}
+      onMouseDown={(e) => {
+        // If user starts drag on header actions, don't initiate canvas drag
+        const target = e.target as HTMLElement;
+        if (target.closest('button')) {
+          e.stopPropagation();
+        }
+      }}
     >
       {/* Header */}
       <div className={`flex items-center justify-between p-4 border-b ${headerBorderClass}`}>
@@ -162,7 +164,11 @@ export default function ShadcnMultiBarChart({
                 e.stopPropagation();
                 onDelete?.(id);
               }}
-              className={`p-1 rounded ${isDarkMode ? 'hover:bg-red-900/20' : 'hover:bg-red-100'} transition-colors`}
+              className={`p-1 rounded ${isDarkMode ? 'hover:bg-red-900/20' : 'hover:bg-red-100'} transition-colors cursor-pointer`}
+              onMouseDown={(e) => {
+                // prevent drag handler in parent from capturing this
+                e.stopPropagation();
+              }}
             >
               <Trash2 className="w-4 h-4 text-red-500" />
             </button>

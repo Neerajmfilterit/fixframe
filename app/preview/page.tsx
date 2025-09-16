@@ -292,7 +292,7 @@ export default function PreviewPage() {
           }`}
         >
           <ArrowLeft className={`h-4 w-4 mr-2 ${isDarkMode ? 'text-white' : 'text-black'}`} />
-          Back to Browse Projects
+          Back
         </button>
 
         <div className="flex items-center space-x-3">

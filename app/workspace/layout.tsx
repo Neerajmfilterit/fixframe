@@ -140,6 +140,9 @@ export default function WorkspaceLayout({
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" })
+      // Clear simple auth flag used by middleware
+      document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+      setUser(null)
       router.push("/")
     } catch (error) {
       console.error("Logout error:", error)
@@ -156,7 +159,7 @@ export default function WorkspaceLayout({
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <Link href="/workspace" className="flex items-center space-x-2">
+              <Link href="/workspace/projects" className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                   <BarChart3 className="h-5 w-5 text-white" />
                 </div>
@@ -197,10 +200,6 @@ export default function WorkspaceLayout({
 
               {/* Quick Actions */}
               <div className="flex items-center space-x-2">
-                {/* Notifications */}
-                <button className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                  <Bell className="h-5 w-5" />
-                </button>
 
                 {/* Profile Dropdown */}
                 <div className="relative">

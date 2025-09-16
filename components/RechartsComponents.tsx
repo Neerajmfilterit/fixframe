@@ -47,8 +47,8 @@ export function RechartsLineChart({
   
   return (
     <div
-      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-200 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''}`}
-      style={{ left: x, top: y, width, height }}
+      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-150 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''} overflow-hidden`}
+      style={{ left: x, top: y, width, height, willChange: 'width, height' }}
       onClick={() => onSelect(id)}
     >
       {/* Header */}
@@ -165,8 +165,8 @@ export function RechartsAreaChart({
   
   return (
     <div
-      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-200 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''}`}
-      style={{ left: x, top: y, width, height }}
+      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-150 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''} overflow-hidden`}
+      style={{ left: x, top: y, width, height, willChange: 'width, height' }}
       onClick={() => onSelect(id)}
     >
       {/* Header */}

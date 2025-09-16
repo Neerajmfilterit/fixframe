@@ -92,7 +92,7 @@ export default function BuilderPage() {
       {/* Back Button */}
       <div className="absolute top-4 left-6 z-50">
         <button
-          onClick={() => router.push("/workspace")}
+          onClick={() => router.push("/workspace/projects")}
           className={`flex items-center px-4 py-2 backdrop-blur-xl ring-1 rounded-lg transition-all duration-300 hover:scale-105 ${
             builderTheme 
               ? 'bg-white/10 ring-white/10 text-white hover:bg-white/20 hover:ring-white/20' 

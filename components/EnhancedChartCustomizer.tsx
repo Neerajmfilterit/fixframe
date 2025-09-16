@@ -7,7 +7,7 @@ import {
   AlignLeft, Menu, ChevronDown, MousePointer, Settings,
   AlertTriangle, UserCircle, Tag, ToggleLeft, Sliders,
   Minus as DividerIcon, Upload, Download, Globe, Zap, Eye, EyeOff,
-  Code, Copy, Download as DownloadIcon, Sparkles, Lightbulb, FileCode
+  Code, Copy, Download as DownloadIcon, Sparkles, Lightbulb, FileCode, Circle
 } from 'lucide-react';
 import JSZip from 'jszip';
 // Simple AlertDialog fallback since shadcn/ui might not be available
@@ -103,6 +103,100 @@ function WireframeComponentEditor({
   return (
     <>
       <h3 className={`font-medium ${textClass} mb-4`}>Component Properties</h3>
+      {/* Icon Button Component */}
+      {selectedChart.type === 'iconbutton' && (
+        <div className="space-y-4">
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Icon</label>
+            <select
+              value={selectedChart.data?.icon || 'Save'}
+              onChange={(e) => onUpdateChart(selectedChart.id, { 
+                data: { ...selectedChart.data, icon: e.target.value }
+              })}
+              className={`w-full px-3 py-2 border rounded-lg ${inputClass}`}
+            >
+              {['Save','Download','Upload','Share','Edit','Delete','Copy','Tag','User','Code','Folder','File','Eye','EyeOff','Grid','Plus','Moon','Sun'].map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Icon Color</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={selectedChart.data?.color || (isDarkMode ? '#E5E7EB' : '#111827')}
+                onChange={(e) => onUpdateChart(selectedChart.id, { 
+                  data: { ...selectedChart.data, color: e.target.value }
+                })}
+                className="w-10 h-10 rounded border-0 cursor-pointer"
+              />
+              <span className={`text-sm ${textSecondaryClass}`}>
+                {selectedChart.data?.color || (isDarkMode ? '#E5E7EB' : '#111827')}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Background Color</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={selectedChart.data?.bgColor || '#00000000'}
+                onChange={(e) => onUpdateChart(selectedChart.id, { 
+                  data: { ...selectedChart.data, bgColor: e.target.value }
+                })}
+                className="w-10 h-10 rounded border-0 cursor-pointer"
+              />
+              <span className={`text-sm ${textSecondaryClass}`}>
+                {selectedChart.data?.bgColor || 'transparent'}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={`block text-sm ${textSecondaryClass} mb-2`}>Border Color</label>
+              <input
+                type="color"
+                value={selectedChart.data?.borderColor || '#000000'}
+                onChange={(e) => onUpdateChart(selectedChart.id, { 
+                  data: { ...selectedChart.data, borderColor: e.target.value }
+                })}
+                className="w-10 h-10 rounded border-0 cursor-pointer"
+              />
+            </div>
+            <div>
+              <label className={`block text-sm ${textSecondaryClass} mb-2`}>Border Width</label>
+              <input
+                type="number"
+                value={selectedChart.data?.borderWidth ?? 0}
+                onChange={(e) => onUpdateChart(selectedChart.id, { 
+                  data: { ...selectedChart.data, borderWidth: parseInt(e.target.value) || 0 }
+                })}
+                className={`w-full px-2 py-1 text-sm border rounded ${inputClass}`}
+                min="0"
+                max="12"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Border Radius</label>
+            <input
+              type="number"
+              value={selectedChart.data?.borderRadius ?? 0}
+              onChange={(e) => onUpdateChart(selectedChart.id, { 
+                data: { ...selectedChart.data, borderRadius: parseInt(e.target.value) || 0 }
+              })}
+              className={`w-full px-2 py-1 text-sm border rounded ${inputClass}`}
+              min="0"
+              max="48"
+            />
+          </div>
+        </div>
+      )}
       
       {/* Button Component */}
       {selectedChart.type === 'button' && (
@@ -1087,6 +1181,241 @@ function WireframeComponentEditor({
               className="w-4 h-4"
             />
             <label className={`text-sm ${textSecondaryClass}`}>Checked by default</label>
+          </div>
+        </div>
+      )}
+
+      {/* Radio Button Component */}
+      {selectedChart.type === 'radio' && (
+        <div className="space-y-4">
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Group Label</label>
+            <input
+              type="text"
+              value={selectedChart.data?.label || 'Select an option:'}
+              onChange={(e) => onUpdateChart(selectedChart.id, { 
+                data: { ...selectedChart.data, label: e.target.value }
+              })}
+              className={`w-full px-3 py-2 border rounded-lg ${inputClass}`}
+              placeholder="Enter group label..."
+            />
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Options</label>
+            <div className="space-y-2">
+              {(selectedChart.data?.options || ['Option 1', 'Option 2', 'Option 3']).map((option: string, index: number) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={option}
+                    onChange={(e) => {
+                      const newOptions = [...(selectedChart.data?.options || ['Option 1', 'Option 2', 'Option 3'])];
+                      newOptions[index] = e.target.value;
+                      onUpdateChart(selectedChart.id, { 
+                        data: { ...selectedChart.data, options: newOptions }
+                      });
+                    }}
+                    className={`flex-1 px-3 py-2 border rounded-lg ${inputClass}`}
+                    placeholder={`Option ${index + 1}`}
+                  />
+                  <button
+                    onClick={() => {
+                      const newOptions = [...(selectedChart.data?.options || ['Option 1', 'Option 2', 'Option 3'])];
+                      newOptions.splice(index, 1);
+                      onUpdateChart(selectedChart.id, { 
+                        data: { ...selectedChart.data, options: newOptions }
+                      });
+                    }}
+                    className="px-2 py-1 text-red-500 hover:bg-red-50 rounded"
+                    disabled={(selectedChart.data?.options || ['Option 1', 'Option 2', 'Option 3']).length <= 2}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                const newOptions = [...(selectedChart.data?.options || ['Option 1', 'Option 2', 'Option 3']), `Option ${(selectedChart.data?.options || ['Option 1', 'Option 2', 'Option 3']).length + 1}`];
+                onUpdateChart(selectedChart.id, { 
+                  data: { ...selectedChart.data, options: newOptions }
+                });
+              }}
+              className="mt-2 px-3 py-1 text-sm text-blue-500 hover:bg-blue-50 rounded"
+            >
+              + Add Option
+            </button>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Default Selection</label>
+            <select
+              value={selectedChart.data?.selected || (selectedChart.data?.options || ['Option 1', 'Option 2', 'Option 3'])[0]}
+              onChange={(e) => onUpdateChart(selectedChart.id, { 
+                data: { ...selectedChart.data, selected: e.target.value }
+              })}
+              className={`w-full px-3 py-2 border rounded-lg ${inputClass}`}
+            >
+              {(selectedChart.data?.options || ['Option 1', 'Option 2', 'Option 3']).map((option: string, index: number) => (
+                <option key={index} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Layout Style</label>
+            <select
+              value={selectedChart.data?.layout || 'horizontal'}
+              onChange={(e) => onUpdateChart(selectedChart.id, { 
+                data: { ...selectedChart.data, layout: e.target.value }
+              })}
+              className={`w-full px-3 py-2 border rounded-lg ${inputClass}`}
+            >
+              <option value="horizontal">Horizontal Layout</option>
+              <option value="vertical">Vertical Layout</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Radio Button Colors</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={`block text-xs ${textSecondaryClass} mb-1`}>Selected Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={selectedChart.data?.color || '#3B82F6'}
+                    onChange={(e) => onUpdateChart(selectedChart.id, { 
+                      data: { ...selectedChart.data, color: e.target.value }
+                    })}
+                    className="w-8 h-8 rounded border-0 cursor-pointer"
+                  />
+                  <span className={`text-xs ${textSecondaryClass}`}>
+                    {selectedChart.data?.color || '#3B82F6'}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className={`block text-xs ${textSecondaryClass} mb-1`}>Border Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={selectedChart.data?.borderColor || '#D1D5DB'}
+                    onChange={(e) => onUpdateChart(selectedChart.id, { 
+                      data: { ...selectedChart.data, borderColor: e.target.value }
+                    })}
+                    className="w-8 h-8 rounded border-0 cursor-pointer"
+                  />
+                  <span className={`text-xs ${textSecondaryClass}`}>
+                    {selectedChart.data?.borderColor || '#D1D5DB'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Dimensions</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={`block text-xs ${textSecondaryClass} mb-1`}>Width</label>
+                <input
+                  type="number"
+                  value={selectedChart.width}
+                  onChange={(e) => onUpdateChart(selectedChart.id, { width: parseInt(e.target.value) || 200 })}
+                  className={`w-full px-2 py-1 text-sm border rounded ${inputClass}`}
+                  min="150"
+                  max="600"
+                />
+              </div>
+              <div>
+                <label className={`block text-xs ${textSecondaryClass} mb-1`}>Height</label>
+                <input
+                  type="number"
+                  value={selectedChart.height}
+                  onChange={(e) => onUpdateChart(selectedChart.id, { height: parseInt(e.target.value) || 120 })}
+                  className={`w-full px-2 py-1 text-sm border rounded ${inputClass}`}
+                  min="80"
+                  max="300"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Radio Button Size</label>
+            <select
+              value={selectedChart.data?.size || 'medium'}
+              onChange={(e) => onUpdateChart(selectedChart.id, { 
+                data: { ...selectedChart.data, size: e.target.value }
+              })}
+              className={`w-full px-3 py-2 border rounded-lg ${inputClass}`}
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Spacing</label>
+            <select
+              value={selectedChart.data?.spacing || 'medium'}
+              onChange={(e) => onUpdateChart(selectedChart.id, { 
+                data: { ...selectedChart.data, spacing: e.target.value }
+              })}
+              className={`w-full px-3 py-2 border rounded-lg ${inputClass}`}
+            >
+              <option value="tight">Tight</option>
+              <option value="medium">Medium</option>
+              <option value="loose">Loose</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Label Size</label>
+            <select
+              value={selectedChart.data?.labelSize || 'medium'}
+              onChange={(e) => onUpdateChart(selectedChart.id, { 
+                data: { ...selectedChart.data, labelSize: e.target.value }
+              })}
+              className={`w-full px-3 py-2 border rounded-lg ${inputClass}`}
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={`block text-sm ${textSecondaryClass} mb-2`}>Size Presets</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Small', width: 150, height: 80 },
+                { label: 'Medium', width: 200, height: 120 },
+                { label: 'Large', width: 300, height: 180 }
+              ].map((size) => (
+                <button
+                  key={size.label}
+                  onClick={() => onUpdateChart(selectedChart.id, { 
+                    width: size.width, 
+                    height: size.height 
+                  })}
+                  className={`px-2 py-1 text-xs border rounded transition-colors ${
+                    selectedChart.width === size.width && selectedChart.height === size.height
+                      ? isDarkMode 
+                        ? 'border-blue-500 bg-blue-900/20 text-blue-400' 
+                        : 'border-blue-500 bg-blue-50 text-blue-700'
+                      : isDarkMode
+                        ? 'border-gray-600 text-gray-300 hover:border-gray-500'
+                        : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  {size.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -2163,7 +2492,7 @@ ${cleanProjectName}/
   React.useEffect(() => {
     if (!selectedChart) return; // Guard against null selectedChart
     
-    const isWireframe = ['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type);
+    const isWireframe = ['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type);
     if (isWireframe) {
       setActiveTab('data');
     } else if (activeTab === 'data' && !isWireframe) {
@@ -3429,7 +3758,7 @@ if __name__ == '__main__':
   };
 
   // Dynamic tabs based on component type
-  const isWireframeComponent = selectedChart ? ['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) : false;
+  const isWireframeComponent = selectedChart ? ['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) : false;
   
   const tabs = isWireframeComponent ? [
     { id: 'data', label: 'Properties', icon: Settings },
@@ -3491,6 +3820,8 @@ if __name__ == '__main__':
             <ChevronDown className="w-8 h-8 text-pink-500" />
           ) : selectedChart.type === 'checkbox' ? (
             <Check className="w-8 h-8 text-green-600" />
+          ) : selectedChart.type === 'radio' ? (
+            <Circle className="w-8 h-8 text-emerald-600" />
           ) : selectedChart.type === 'progress' ? (
             <BarChart3 className="w-8 h-8 text-blue-600" />
           ) : selectedChart.type === 'alert' ? (
@@ -3809,7 +4140,7 @@ if __name__ == '__main__':
         {activeTab === 'data' && (
           <div className="flex flex-col">
             {/* File Upload Toggle and Section */}
-            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) && (
+            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) && (
               <div className={`border-b ${borderClass}`}>
                 {/* Toggle Button */}
                 <div className={`p-4 ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50/30'}`}>
@@ -3892,7 +4223,7 @@ if __name__ == '__main__':
             )}
 
             {/* API Connection Toggle and Section */}
-            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) && (
+            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) && (
               <div className={`border-b ${borderClass}`}>
                 {/* Toggle Button */}
                 <div className={`p-4 ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50/30'}`}>
@@ -4087,7 +4418,7 @@ if __name__ == '__main__':
             )}
 
             {/* Database Connection Toggle and Section */}
-            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) && (
+            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) && (
               <div className={`border-b ${borderClass}`}>
                 {/* Toggle Button */}
                 <div className={`p-4 ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50/30'}`}>
@@ -4300,7 +4631,7 @@ if __name__ == '__main__':
             )}
             
             {/* Wireframe Component Editor */}
-            {['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) ? (
+            {['button', 'iconbutton', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) ? (
               <div className="p-4 space-y-4">
                 {/* Wireframe Component Properties will be rendered here */}
                 <WireframeComponentEditor 
