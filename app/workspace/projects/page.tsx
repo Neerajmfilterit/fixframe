@@ -34,10 +34,10 @@ export default function ProjectsPage() {
   const [showCreatePopup, setShowCreatePopup] = useState(false)
   const [createForm, setCreateForm] = useState({
     name: "",
-    description: "",
-    isPublic: false
+    description: ""
   })
   const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const [showDeletePopup, setShowDeletePopup] = useState(false)
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -63,6 +63,7 @@ export default function ProjectsPage() {
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault()
     setCreating(true)
+    setCreateError(null)
     try {
       const response = await fetch("/api/projects", {
         method: "POST",
@@ -72,14 +73,14 @@ export default function ProjectsPage() {
       const data = await response.json()
       if (response.ok) {
         setShowCreatePopup(false)
-        setCreateForm({ name: "", description: "", isPublic: false })
+        setCreateForm({ name: "", description: "" })
         fetchProjects()
         window.location.href = `/builder?project=${data.project._id}`
       } else {
-        alert(data.error || "Failed to create project")
+        setCreateError(data.error || "Failed to create project")
       }
     } catch (error) {
-      alert("Network error. Please try again.")
+      setCreateError("Network error. Please try again.")
     } finally {
       setCreating(false)
     }
@@ -201,9 +202,6 @@ export default function ProjectsPage() {
                   <div className="mb-4">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="text-lg font-semibold text-slate-900 line-clamp-1">{project.name}</h3>
-                      <span className={`text-xs px-2 py-0.5 rounded-full border ${project.isPublic ? "bg-green-50 text-green-700 border-green-200" : "bg-slate-50 text-slate-700 border-slate-200"}`}>
-                        {project.isPublic ? "Public" : "Private"}
-                      </span>
                     </div>
                     <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
                       {project.description || "No description provided"}
@@ -273,6 +271,11 @@ export default function ProjectsPage() {
             </div>
 
             <form onSubmit={handleCreateProject} className="space-y-6">
+              {createError && (
+                <div className="px-4 py-3 rounded-lg bg-red-50 text-red-700 border border-red-200">
+                  {createError}
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-3">
                   Project Name
@@ -297,21 +300,7 @@ export default function ProjectsPage() {
                   className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none transition-all"
                   placeholder="Describe your project goals and requirements..."
                   rows={4}
-                  required
                 />
-              </div>
-
-              <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl">
-                <input
-                  type="checkbox"
-                  id="isPublic"
-                  checked={createForm.isPublic}
-                  onChange={(e) => setCreateForm({ ...createForm, isPublic: e.target.checked })}
-                  className="h-4 w-4 text-slate-600 focus:ring-slate-500 border-slate-300 rounded"
-                />
-                <label htmlFor="isPublic" className="text-sm text-slate-700 font-medium">
-                  Make this project public
-                </label>
               </div>
 
               <div className="flex items-center justify-end space-x-4 pt-6">

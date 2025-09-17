@@ -26,10 +26,10 @@ export const GET = requireAuth(async (request: NextRequest, user) => {
 // POST /api/projects - Create a new project
 export const POST = requireAuth(async (request: NextRequest, user) => {
   try {
-    const { name, description, isPublic = false } = await request.json()
+    const { name, description = "", isPublic = false } = await request.json()
 
-    if (!name || !description) {
-      return NextResponse.json({ error: "Name and description are required" }, { status: 400 })
+    if (!name) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 })
     }
 
     const client = await clientPromise
