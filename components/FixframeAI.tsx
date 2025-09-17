@@ -532,6 +532,25 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
     }
   };
 
+  // Helper: Tailwind needs literal span classes; map numbers to safe classes
+  const getColSpanClass = (span: number) => {
+    if (span >= 12) return 'col-span-12';
+    if (span >= 8) return 'col-span-8';
+    if (span >= 6) return 'col-span-6';
+    if (span >= 5) return 'col-span-5';
+    if (span >= 4) return 'col-span-4';
+    if (span >= 3) return 'col-span-3';
+    if (span >= 2) return 'col-span-2';
+    return 'col-span-1';
+  };
+
+  const getRowSpanClass = (span: number) => {
+    if (span >= 4) return 'row-span-4';
+    if (span >= 3) return 'row-span-3';
+    if (span >= 2) return 'row-span-2';
+    return 'row-span-1';
+  };
+
   const handleGenerate = async () => {
     if (!inputText.trim()) return;
     
@@ -775,11 +794,11 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
         </div>
 
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 auto-rows-fr gap-6">
           {dashboardComponents.map((component, index) => (
             <div 
               key={component.id}
-              className={`col-span-${component.colSpan} row-span-${component.rowSpan}`}
+              className={`${getColSpanClass(component.colSpan)} ${getRowSpanClass(component.rowSpan)}`}
             >
               {renderDashboardComponent(component)}
             </div>
