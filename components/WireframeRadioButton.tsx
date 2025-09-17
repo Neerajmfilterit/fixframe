@@ -91,15 +91,7 @@ export function WireframeRadioButton({
       style={{ left: x, top: y, width, height }}
       onClick={handleContainerClick}
     >
-      {/* Delete Button */}
-      {isSelected && onDelete && (
-        <button
-          onClick={handleDeleteClick}
-          className="absolute -top-2 -right-2 z-10 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-        >
-          <X className="w-3 h-3" />
-        </button>
-      )}
+      {/* Inline delete hidden in favor of context menu */}
 
       {/* Radio Button Content */}
       <div 

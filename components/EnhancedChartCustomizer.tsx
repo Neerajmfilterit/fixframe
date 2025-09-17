@@ -4222,8 +4222,8 @@ if __name__ == '__main__':
               </div>
             )}
 
-            {/* API Connection Toggle and Section */}
-            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) && (
+            {/* API Connection Toggle and Section (hidden for icons) */}
+            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator', 'iconbutton'].includes(selectedChart.type) && (
               <div className={`border-b ${borderClass}`}>
                 {/* Toggle Button */}
                 <div className={`p-4 ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50/30'}`}>
@@ -4417,8 +4417,8 @@ if __name__ == '__main__':
               </div>
             )}
 
-            {/* Database Connection Toggle and Section */}
-            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) && (
+            {/* Database Connection Toggle and Section (hidden for icons) */}
+            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator', 'iconbutton'].includes(selectedChart.type) && (
               <div className={`border-b ${borderClass}`}>
                 {/* Toggle Button */}
                 <div className={`p-4 ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50/30'}`}>

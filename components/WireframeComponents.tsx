@@ -7,8 +7,13 @@ import {
   AlertTriangle, UserCircle, Tag, ToggleLeft, ToggleRight,
   Sliders, FileText, Minus as DividerIcon, HelpCircle,
   Circle, Dot, Save, Download, Upload, Share2, Edit3,
-  Copy, Code, FolderOpen, Eye, EyeOff, Grid, Plus, Moon, Sun
+  Copy, Code, FolderOpen, Eye, EyeOff, Grid, Plus, Moon, Sun,
+  Heart, Star, Camera, Calendar, CheckCircle, XCircle,
+  PlusCircle, MinusCircle, Play, Pause, StopCircle as Stop,
+  RefreshCw as Refresh, Lock, Unlock, Link, Cloud
 } from 'lucide-react';
+
+const INLINE_DELETE_ENABLED = false;
 
 // Base interface for all wireframe components
 interface WireframeComponentProps {
@@ -60,8 +65,8 @@ export function WireframeButton({
         </div>
       </div>
 
-      {/* Delete Button (only shown when selected) */}
-      {isSelected && onDelete && (
+      {/* Delete Button disabled in favor of context menu */}
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -108,8 +113,8 @@ export function WireframeInput({
         </div>
       </div>
 
-      {/* Delete Button (only shown when selected) */}
-      {isSelected && onDelete && (
+      {/* Delete Button disabled in favor of context menu */}
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -160,8 +165,8 @@ export function WireframeText({
         </div>
       </div>
 
-      {/* Delete Button (only shown when selected) */}
-      {isSelected && onDelete && (
+      {/* Delete Button disabled in favor of context menu */}
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -223,8 +228,8 @@ export function WireframeImage({
         )}
       </div>
 
-      {/* Delete Button (only shown when selected) */}
-      {isSelected && onDelete && (
+      {/* Delete Button disabled in favor of context menu */}
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -268,8 +273,8 @@ export function WireframeCard({
         </div>
       </div>
 
-      {/* Delete Button (only shown when selected) */}
-      {isSelected && onDelete && (
+      {/* Delete Button disabled in favor of context menu */}
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -317,7 +322,7 @@ export function WireframeNavigation({
       </div>
 
       {/* Delete Button (only shown when selected) */}
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -368,7 +373,7 @@ export function WireframeDropdown({
       </div>
 
       {/* Delete Button (only shown when selected) */}
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -410,7 +415,7 @@ export function WireframeCheckbox({
       </div>
 
       {/* Delete Button (only shown when selected) */}
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -459,7 +464,7 @@ export function WireframeProgress({
       </div>
 
       {/* Delete Button (only shown when selected) */}
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -517,18 +522,7 @@ export function WireframeAlert({
         </div>
       </div>
 
-      {isSelected && onDelete && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(id);
-          }}
-          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition-colors shadow-md flex items-center justify-center"
-          title="Delete"
-        >
-          <Trash2 className="w-3 h-3" />
-        </button>
-      )}
+      {/* No inline delete button for icons; use context menu in builder */}
     </div>
   );
 }
@@ -569,7 +563,7 @@ export function WireframeAvatar({
         )}
       </div>
 
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -614,7 +608,7 @@ export function WireframeBadge({
         </div>
       </div>
 
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -654,7 +648,7 @@ export function WireframeSwitch({
         </div>
       </div>
 
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -704,7 +698,7 @@ export function WireframeSlider({
         </div>
       </div>
 
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -746,7 +740,7 @@ export function WireframeTextarea({
         </div>
       </div>
 
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -787,7 +781,7 @@ export function WireframeSeparator({
         />
       </div>
 
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -819,7 +813,9 @@ export function WireframeIconButton({
   const iconMap: Record<string, React.ComponentType<any>> = {
     Save, Download, Upload, Share: Share2, Edit: Edit3, Delete: Trash2, Copy, Tag,
     User: UserCircle, Code, Folder: FolderOpen, File: FileText, Eye, EyeOff, Grid,
-    Plus, Moon, Sun
+    Plus, Moon, Sun, Home, Search, Settings, Bell, Heart, Star, Camera, Calendar,
+    CheckCircle, XCircle, PlusCircle, MinusCircle, Play, Pause, Stop, Refresh,
+    Lock, Unlock, Link, Cloud
   };
   const IconComp = iconMap[iconName] || Save;
 
@@ -845,7 +841,7 @@ export function WireframeIconButton({
         </div>
       </div>
 
-      {isSelected && onDelete && (
+      {INLINE_DELETE_ENABLED && isSelected && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();

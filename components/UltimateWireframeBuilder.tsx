@@ -9,7 +9,10 @@ import {
   AlertTriangle, UserCircle, Tag, ToggleLeft, Sliders,
   Minus as DividerIcon, Copy, Trash2, Edit3, Layers,
   ChevronLeft, ChevronRight, X, Sparkles, Code,
-  Share2, Circle
+  Share2, Circle, Home, Settings, Search, Bell, Heart, Star,
+  Camera, Calendar, CheckCircle, XCircle, PlusCircle, MinusCircle,
+  Play, Pause, StopCircle as Stop, RefreshCw as Refresh, Lock, 
+  Unlock, Link, Cloud
 } from 'lucide-react';
 import { DarkModeBarChart, DarkModeDonutChart, DEFAULT_COLORS } from './DarkModeCharts';
 import { RechartsLineChart, RechartsAreaChart } from './RechartsComponents';
@@ -259,6 +262,27 @@ const CHART_TEMPLATES = [
     category: 'icons',
     defaultData: { icon: 'Copy' }
   },
+  // Additional Icon Buttons
+  { type: 'iconbutton' as const, name: 'Home', icon: Home, category: 'icons', defaultData: { icon: 'Home' } },
+  { type: 'iconbutton' as const, name: 'Search', icon: Search, category: 'icons', defaultData: { icon: 'Search' } },
+  { type: 'iconbutton' as const, name: 'Settings', icon: Settings, category: 'icons', defaultData: { icon: 'Settings' } },
+  { type: 'iconbutton' as const, name: 'Bell', icon: Bell, category: 'icons', defaultData: { icon: 'Bell' } },
+  { type: 'iconbutton' as const, name: 'Heart', icon: Heart, category: 'icons', defaultData: { icon: 'Heart' } },
+  { type: 'iconbutton' as const, name: 'Star', icon: Star, category: 'icons', defaultData: { icon: 'Star' } },
+  { type: 'iconbutton' as const, name: 'Camera', icon: Camera, category: 'icons', defaultData: { icon: 'Camera' } },
+  { type: 'iconbutton' as const, name: 'Calendar', icon: Calendar, category: 'icons', defaultData: { icon: 'Calendar' } },
+  { type: 'iconbutton' as const, name: 'CheckCircle', icon: CheckCircle, category: 'icons', defaultData: { icon: 'CheckCircle' } },
+  { type: 'iconbutton' as const, name: 'XCircle', icon: XCircle, category: 'icons', defaultData: { icon: 'XCircle' } },
+  { type: 'iconbutton' as const, name: 'PlusCircle', icon: PlusCircle, category: 'icons', defaultData: { icon: 'PlusCircle' } },
+  { type: 'iconbutton' as const, name: 'MinusCircle', icon: MinusCircle, category: 'icons', defaultData: { icon: 'MinusCircle' } },
+  { type: 'iconbutton' as const, name: 'Play', icon: Play, category: 'icons', defaultData: { icon: 'Play' } },
+  { type: 'iconbutton' as const, name: 'Pause', icon: Pause, category: 'icons', defaultData: { icon: 'Pause' } },
+  { type: 'iconbutton' as const, name: 'Stop', icon: Stop, category: 'icons', defaultData: { icon: 'Stop' } },
+  { type: 'iconbutton' as const, name: 'Refresh', icon: Refresh, category: 'icons', defaultData: { icon: 'Refresh' } },
+  { type: 'iconbutton' as const, name: 'Lock', icon: Lock, category: 'icons', defaultData: { icon: 'Lock' } },
+  { type: 'iconbutton' as const, name: 'Unlock', icon: Unlock, category: 'icons', defaultData: { icon: 'Unlock' } },
+  { type: 'iconbutton' as const, name: 'Link', icon: Link, category: 'icons', defaultData: { icon: 'Link' } },
+  { type: 'iconbutton' as const, name: 'Cloud', icon: Cloud, category: 'icons', defaultData: { icon: 'Cloud' } },
   {
     type: 'iconbutton' as const,
     name: 'Tag',
@@ -483,6 +507,7 @@ export default function UltimateWireframeBuilder({
   const [activeSidebarPanel, setActiveSidebarPanel] = useState<null | 'charts' | 'components' | 'slides' | 'icons'>(null);
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [contextMenu, setContextMenu] = useState<{visible: boolean; x: number; y: number; chartId: string | null}>({ visible: false, x: 0, y: 0, chartId: null });
   const [showShareModal, setShowShareModal] = useState(false);
   const [showPdfOptions, setShowPdfOptions] = useState(false);
   const [selectedSlides, setSelectedSlides] = useState<string[]>([]);
@@ -885,6 +910,7 @@ export default function UltimateWireframeBuilder({
   const handleResizeMove = (e: MouseEvent) => {
     if (!resizingChartId || !resizeHandle || !resizeStartRef.current) return;
     const start = resizeStartRef.current;
+    const chartBeingResized = getCurrentPageCharts().find(c => c.id === resizingChartId);
     let newX = start.x;
     let newY = start.y;
     let newW = start.width;
@@ -892,8 +918,8 @@ export default function UltimateWireframeBuilder({
     const dx = e.pageX - start.mouseX;
     const dy = e.pageY - start.mouseY;
 
-    const minW = 120;
-    const minH = 100;
+    const minW = chartBeingResized?.type === 'iconbutton' ? 8 : 120;
+    const minH = chartBeingResized?.type === 'iconbutton' ? 8 : 100;
 
     const applyAspect = (corner: 'ne' | 'nw' | 'se' | 'sw') => {
       // Maintain aspect ratio on diagonal handles
@@ -1865,7 +1891,7 @@ export default function UltimateWireframeBuilder({
       )}
 
       {/* Main Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col" onClick={() => contextMenu.visible && setContextMenu({ visible: false, x: 0, y: 0, chartId: null })}>
         {/* Header */}
         <div className={`${headerBgClass} border-b ${borderClass} p-4`}>
           <div className="flex items-center justify-between">
@@ -2080,6 +2106,11 @@ export default function UltimateWireframeBuilder({
               <div
                 key={chart.id}
                 onMouseDown={(e) => handleMouseDown(e, chart.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setSelectedChart(chart.id);
+                  setContextMenu({ visible: true, x: e.pageX, y: e.pageY, chartId: chart.id });
+                }}
                 className={`relative transition-opacity duration-150 ${isBeingDragged ? 'opacity-75 z-50' : 'z-10'}`}
                 style={{ 
                     position: 'absolute',
@@ -2226,6 +2257,42 @@ export default function UltimateWireframeBuilder({
               </div>
             );
           })}
+
+          {/* Context Menu */}
+          {contextMenu.visible && contextMenu.chartId && (
+            <div
+              className={`fixed z-50 ${isDarkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'} border rounded-md shadow-lg`}
+              style={{ left: contextMenu.x, top: contextMenu.y, minWidth: 160 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
+                onClick={() => {
+                  const id = contextMenu.chartId!;
+                  // duplicate chart
+                  const currentPageCharts = getCurrentPageCharts();
+                  const chart = currentPageCharts.find(c => c.id === id);
+                  if (chart) {
+                    const copy = { ...chart, id: `${chart.id}-copy-${Date.now()}`, x: chart.x + 20, y: chart.y + 20 };
+                    setPages(prev => prev.map(p => p.id === currentPageId ? { ...p, charts: [...p.charts, copy] } : p));
+                  }
+                  setContextMenu({ visible: false, x: 0, y: 0, chartId: null });
+                }}
+              >
+                Duplicate
+              </button>
+              <button
+                className={`w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 ${isDarkMode ? 'hover:bg-red-900/20' : ''}`}
+                onClick={() => {
+                  const id = contextMenu.chartId!;
+                  deleteChart(id);
+                  setContextMenu({ visible: false, x: 0, y: 0, chartId: null });
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          )}
 
         </div>
         

@@ -55,9 +55,16 @@ export function ShadcnComboChart({
   const barColor = data[0]?.barColor || '#3B82F6';
   const lineColor = data[0]?.lineColor || '#10B981';
   
+  // Reserve space so legend is always visible even at very small sizes
+  const headerAndFooterHeight = 112; // approximate combined height of header and footer
+  const legendReservedHeight = 36; // space to ensure legend isn't clipped
+  const minChartHeight = 60;
+  const chartHeight = Math.max(height - (headerAndFooterHeight + legendReservedHeight), minChartHeight);
+  const legendFontSize = height < 140 ? 10 : 12;
+  
   return (
     <div
-      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-200 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''}`}
+      className={`absolute ${bgClass} rounded-lg shadow-md border-2 transition-all duration-200 ${selectedBorderClass} ${!isSelected ? hoverBorderClass : ''} ${isSelected ? 'shadow-lg' : ''} overflow-hidden flex flex-col`}
       style={{ left: x, top: y, width, height }}
       onClick={() => onSelect(id)}
     >
@@ -107,8 +114,8 @@ export function ShadcnComboChart({
       </div>
 
       {/* Chart */}
-      <div className="p-4 flex-1">
-        <ResponsiveContainer width="100%" height={Math.max(height - 120, 200)}>
+      <div className="p-4">
+        <ResponsiveContainer width="100%" height={chartHeight}>
           <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid 
               strokeDasharray="3 3" 
@@ -138,7 +145,6 @@ export function ShadcnComboChart({
                 color: isDarkMode ? '#F3F4F6' : '#1F2937'
               }}
             />
-            <Legend />
             <Bar 
               yAxisId="left"
               dataKey="Sales" 
@@ -158,6 +164,20 @@ export function ShadcnComboChart({
             />
           </ComposedChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Legend */}
+      <div className="px-4 pb-2 shrink-0">
+        <div className="flex justify-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2" style={{ fontSize: legendFontSize }}>
+            <div className="w-3 h-3 rounded" style={{ backgroundColor: barColor }} />
+            <span className={`${textSecondaryClass} min-w-0 break-words`}>Sales Volume</span>
+          </div>
+          <div className="flex items-center gap-2" style={{ fontSize: legendFontSize }}>
+            <div className="w-3 h-0.5" style={{ backgroundColor: lineColor }} />
+            <span className={`${textSecondaryClass} min-w-0 break-words`}>Growth Rate</span>
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
