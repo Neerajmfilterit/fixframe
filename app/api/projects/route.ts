@@ -16,7 +16,19 @@ export const GET = requireAuth(async (request: NextRequest, user) => {
       .sort({ updatedAt: -1 })
       .toArray()
 
-    return NextResponse.json(userProjects)
+    // Append computed charts count for each project
+    const projectsWithCounts = userProjects.map((p: any) => {
+      const chartsFromRoot = Array.isArray(p?.charts) ? p.charts.length : 0
+      const chartsFromPages = Array.isArray(p?.pages)
+        ? p.pages.reduce((sum: number, page: any) => sum + (Array.isArray(page?.charts) ? page.charts.length : 0), 0)
+        : 0
+      return {
+        ...p,
+        chartsCount: chartsFromPages > 0 ? chartsFromPages : chartsFromRoot
+      }
+    })
+
+    return NextResponse.json(projectsWithCounts)
   } catch (error) {
     console.error("Error fetching projects:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

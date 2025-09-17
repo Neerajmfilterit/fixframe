@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   BarChart3, PieChart, Save, FolderOpen, FileText, 
   Download, Upload, Eye, EyeOff, Grid, Plus, Moon, Sun,
@@ -479,10 +480,15 @@ export default function UltimateWireframeBuilder({
   const [showFixframeAI, setShowFixframeAI] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'charts' | 'components' | 'slides'>('charts');
+  const [activeSidebarPanel, setActiveSidebarPanel] = useState<null | 'charts' | 'components' | 'slides' | 'icons'>(null);
+  const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showPdfOptions, setShowPdfOptions] = useState(false);
   const [selectedSlides, setSelectedSlides] = useState<string[]>([]);
+  const projectNameInputRef = useRef<HTMLInputElement>(null);
+  const [editingPageId, setEditingPageId] = useState<string | null>(null);
+  const [editingPageName, setEditingPageName] = useState<string>("");
   // Resize state
   const [resizingChartId, setResizingChartId] = useState<string | null>(null);
   const [resizeHandle, setResizeHandle] = useState<
@@ -1573,113 +1579,110 @@ export default function UltimateWireframeBuilder({
         }
       `}</style>
     <div className={`h-screen ${bgClass} flex`}>
-      {/* Sidebar - Widget Library */}
-        <div className={`w-80 ${sidebarBgClass} border-r ${borderClass} flex flex-col sidebar-scrollbar ${isViewOnly ? 'opacity-60' : ''}`}>
-        {/* Header */}
-        <div className={`p-4 border-b ${borderClass}`}>
-          <div className="mb-16">
-            <h2 className={`text-lg font-semibold ${textClass}`}></h2>
-          </div>
-          
-          {/* Professional Tab Navigation */}
-            <div className={`flex rounded-lg p-1 mb-4 relative ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
-          }`} style={{ minHeight: '40px' }}>
-            {/* Animated tab indicator */}
-            <div 
-                className={`absolute top-1 bottom-1 transition-all duration-300 ease-out rounded-md ${isDarkMode ? 'bg-blue-600' : 'bg-white border border-blue-200'
-              }`}
-              style={{
-                width: 'calc(33.33% - 2px)',
-                left: activeTab === 'charts' ? '4px' : activeTab === 'components' ? 'calc(33.33% + 2px)' : 'calc(66.66% + 0px)'
-              }}
-            />
-            
-            <button
-              onClick={() => setActiveTab('charts')}
-                className={`relative z-10 flex-1 px-2 py-2 text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1 ${activeTab === 'charts'
-                  ? isDarkMode
-                    ? 'text-white'
-                    : 'text-blue-600'
-                  : isDarkMode
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-gray-600 hover:text-gray-900'
-              }`}
+      {/* Vertical Sidebar - Navigation */}
+      <div className={`w-16 ${sidebarBgClass} border-r ${borderClass} flex flex-col items-stretch ${textClass} ${isViewOnly ? 'opacity-60' : ''} relative z-50`}>
+        {/* Tabs */}
+        <div className="flex-1 py-12 flex flex-col items-stretch">
+          <button
+            title="Charts"
+            onClick={() => setActiveSidebarPanel(p => p === 'charts' ? null : 'charts')}
+            className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'charts' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
+          >
+            {activeSidebarPanel === 'charts' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`} />}
+            <BarChart3 className={`w-5 h-5 ${activeSidebarPanel === 'charts' ? 'text-blue-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+            <span
+              className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
             >
-              <BarChart3 className="w-3 h-3" />
               Charts
-            </button>
-            <button
-              onClick={() => setActiveTab('components')}
-                className={`relative z-10 flex-1 px-2 py-2 text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1 ${activeTab === 'components'
-                  ? isDarkMode
-                    ? 'text-white'
-                    : 'text-blue-600'
-                  : isDarkMode
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-gray-600 hover:text-gray-900'
-              }`}
+            </span>
+          </button>
+          <button
+            title="Components"
+            onClick={() => setActiveSidebarPanel(p => p === 'components' ? null : 'components')}
+            className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'components' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
+          >
+            {activeSidebarPanel === 'components' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-indigo-500' : 'bg-indigo-600'}`} />}
+            <Table className={`w-5 h-5 ${activeSidebarPanel === 'components' ? 'text-indigo-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+            <span
+              className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
             >
-              <Table className="w-3 h-3" />
               Components
-            </button>
-            
-            <button
-              onClick={() => setActiveTab('slides')}
-                className={`relative z-10 flex-1 px-2 py-2 text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1 ${activeTab === 'slides'
-                  ? isDarkMode
-                    ? 'text-white'
-                    : 'text-blue-600'
-                  : isDarkMode
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-gray-600 hover:text-gray-900'
-              }`}
+            </span>
+          </button>
+          <button
+            title="Slides"
+            onClick={() => setActiveSidebarPanel(p => p === 'slides' ? null : 'slides')}
+            className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'slides' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
+          >
+            {activeSidebarPanel === 'slides' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-emerald-500' : 'bg-emerald-600'}`} />}
+            <Layers className={`w-5 h-5 ${activeSidebarPanel === 'slides' ? 'text-emerald-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+            <span
+              className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
             >
-              <Layers className="w-3 h-3" />
               Slides
+            </span>
+          </button>
+          <button
+            title="Icons"
+            onClick={() => setActiveSidebarPanel(p => p === 'icons' ? null : 'icons')}
+            className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'icons' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
+          >
+            {activeSidebarPanel === 'icons' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-pink-500' : 'bg-pink-600'}`} />}
+            <Square className={`w-5 h-5 ${activeSidebarPanel === 'icons' ? 'text-pink-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+            <span
+              className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
+            >
+              Icons
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Sliding Drawer Panel (overlays content) */}
+      <div className={`fixed top-0 left-16 h-screen z-40 transition-transform duration-300 ease-in-out ${activeSidebarPanel ? 'translate-x-0' : '-translate-x-full'}`}
+        style={{ width: '20rem' }}
+      >
+        <div className={`${sidebarBgClass} h-full border-r ${borderClass} flex flex-col shadow-xl`}> 
+          <div className={`p-3 border-b ${borderClass} flex items-center justify-between sticky top-0`}>
+            <div className={`text-sm font-semibold ${textClass}`}>
+              {activeSidebarPanel === 'charts' && 'Charts'}
+              {activeSidebarPanel === 'components' && 'Components'}
+              {activeSidebarPanel === 'slides' && 'Slides'}
+              {activeSidebarPanel === 'icons' && 'Icons'}
+            </div>
+            <button
+              onClick={() => setActiveSidebarPanel(null)}
+              className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+            >
+              <X className="w-4 h-4" />
             </button>
           </div>
-        </div>
-
-        {/* Widget Templates */}
-        <div className="flex-1 pt-4 px-4 pb-0 overflow-y-auto max-h-[calc(100vh-280px)]">
-          {activeTab === 'slides' ? (
-            /* Slides Management */
-            <div className="space-y-4">
-              {/* Add New Slide Button */}
-              <button
-                onClick={addNewPage}
+          <div className="flex-1 overflow-y-auto p-3 sidebar-scrollbar">
+            {activeSidebarPanel === 'slides' && (
+              <div className="space-y-4">
+                <button
+                  onClick={addNewPage}
                   className={`w-full px-4 py-3 rounded-lg transition-colors flex items-center gap-2 ${isDarkMode
                     ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30'
                     : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                }`}
-              >
-                <Plus className="w-5 h-5" />
-                Slides
-              </button>
-
-              {/* Current Page Info */}
-                <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className={`font-medium ${textClass}`}>
-                      {getCurrentPage()?.name || 'Slide 1'}
+                  }`}
+                >
+                  <Plus className="w-5 h-5" />
+                  New Slide
+                </button>
+                <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className={`font-medium ${textClass}`}>{getCurrentPage()?.name || 'Slide 1'}</div>
+                      <div className={`text-xs ${textSecondaryClass}`}>{getCurrentPageCharts().length} {getCurrentPageCharts().length === 1 ? 'element' : 'elements'}</div>
                     </div>
-                    <div className={`text-xs ${textSecondaryClass}`}>
-                      {getCurrentPageCharts().length} {getCurrentPageCharts().length === 1 ? 'element' : 'elements'}
-                    </div>
-                  </div>
-                  <div className={`text-xs ${textSecondaryClass}`}>
-                    {pages.length} {pages.length === 1 ? 'slide' : 'slides'}
+                    <div className={`text-xs ${textSecondaryClass}`}>{pages.length} {pages.length === 1 ? 'slide' : 'slides'}</div>
                   </div>
                 </div>
-              </div>
-
-              {/* Slides List */}
-              <div className="space-y-2">
-                {pages.map((page, index) => (
-                  <div
-                    key={page.id}
+                <div className="space-y-2">
+                  {pages.map((page, index) => (
+                    <div
+                      key={page.id}
                       className={`p-3 rounded-lg border transition-colors cursor-pointer ${page.id === currentPageId
                         ? isDarkMode
                           ? 'bg-blue-900/30 border-blue-600 text-blue-400'
@@ -1687,181 +1690,207 @@ export default function UltimateWireframeBuilder({
                         : isDarkMode
                           ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
                           : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
-                    }`}
-                    onClick={() => switchToPage(page.id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      }`}
+                      onClick={() => switchToPage(page.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium ${page.id === currentPageId
-                            ? isDarkMode
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-blue-500 text-white'
-                            : isDarkMode
-                              ? 'bg-gray-600 text-gray-300'
-                              : 'bg-gray-400 text-white'
-                        }`}>
-                          {index + 1}
-                        </div>
-                        <div>
-                          <div className="font-medium">{page.name}</div>
-                            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            ? isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
+                            : isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-400 text-white'
                           }`}>
-                            {page.charts.length} {page.charts.length === 1 ? 'element' : 'elements'}
+                            {index + 1}
+                          </div>
+                          <div>
+                            {editingPageId === page.id ? (
+                              <input
+                                autoFocus
+                                value={editingPageName}
+                                onChange={(e) => setEditingPageName(e.target.value)}
+                                onBlur={() => {
+                                  if (editingPageName.trim()) {
+                                    renamePage(page.id, editingPageName.trim());
+                                  }
+                                  setEditingPageId(null);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    if (editingPageName.trim()) {
+                                      renamePage(page.id, editingPageName.trim());
+                                    }
+                                    setEditingPageId(null);
+                                  }
+                                  if (e.key === 'Escape') {
+                                    setEditingPageId(null);
+                                    setEditingPageName(page.name);
+                                  }
+                                }}
+                                className={`px-2 py-1 text-sm rounded border ${borderClass} ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
+                              />
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <div className="font-medium">{page.name}</div>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setEditingPageId(page.id); setEditingPageName(page.name); }}
+                                  title="Rename slide"
+                                  className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-600 text-gray-300' : 'hover:bg-gray-200 text-gray-600'}`}
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{page.charts.length} {page.charts.length === 1 ? 'element' : 'elements'}</div>
                           </div>
                         </div>
-                      </div>
-                      
-                      {/* Page Actions */}
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            duplicatePage(page.id);
-                          }}
-                            className={`p-1 rounded transition-colors ${isDarkMode
-                              ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-300'
-                              : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'
-                          }`}
-                          title="Duplicate slide"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                        
-                        {pages.length > 1 && (
+                        <div className="flex items-center gap-1">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deletePage(page.id);
-                            }}
-                              className={`p-1 rounded transition-colors ${isDarkMode
-                                ? 'hover:bg-red-900/30 text-gray-400 hover:text-red-400'
-                                : 'hover:bg-red-100 text-gray-500 hover:text-red-600'
-                            }`}
-                            title="Delete slide"
+                            onClick={(e) => { e.stopPropagation(); duplicatePage(page.id); }}
+                            className={`p-1 rounded transition-colors ${isDarkMode ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-300' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'}`}
+                            title="Duplicate slide"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Copy className="w-4 h-4" />
                           </button>
-                        )}
+                          {pages.length > 1 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deletePage(page.id); }}
+                              className={`p-1 rounded transition-colors ${isDarkMode ? 'hover:bg-red-900/30 text-gray-400 hover:text-red-400' : 'hover:bg-red-100 text-gray-500 hover:text-red-600'}`}
+                              title="Delete slide"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-          <div>
-            {/* Charts and Components */}
-            <div className="grid grid-cols-2 gap-1">
-            {(activeTab === 'charts' ? getChartTemplates() : getComponentTemplates()).map((template) => {
-              const IconComponent = template.icon;
-              const colors = {
-                bar: 'blue',
-                donut: 'purple',
-                line: 'green',
-                area: 'orange',
-                combo: 'cyan',
-                multibar: 'teal',
-                table: 'indigo',
-                button: 'slate',
-                iconbutton: 'slate',
-                input: 'emerald',
-                text: 'amber',
-                image: 'rose',
-                card: 'violet',
-                navigation: 'sky',
-                dropdown: 'lime',
-                checkbox: 'pink',
-                    radio: 'emerald',
-                progress: 'orange',
-                alert: 'red',
-                avatar: 'blue',
-                badge: 'green',
-                switch: 'purple',
-                slider: 'indigo',
-                textarea: 'gray',
-                separator: 'slate'
-              };
-              const color = colors[template.type] || 'blue';
-              
-              return (
-                <button
-                  key={template.type}
-                      onMouseDown={(e) => handleSidebarMouseDown(e, template)}
-                      className={`relative p-2 border-2 border-dashed rounded-lg transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
-                      ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
-                      : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="text-center space-y-3">
-                        <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${isDarkMode
-                        ? `bg-${color}-900/20 group-hover:bg-${color}-900/30`
-                        : `bg-${color}-100 group-hover:bg-${color}-200`
-                    }`}>
-                          <IconComponent className={`w-4 h-4 text-${color}-500 transition-colors`} />
-                    </div>
-                    <div>
-                      <h3 className={`font-medium text-[11px] ${textClass} group-hover:text-${color}-600 transition-colors`}>{template.name}</h3>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-            </div>
-
-          {/* Icon Buttons Section */}
-          <div className="mt-4">
-            <div className={`text-xs font-medium mb-2 uppercase tracking-wide ${textSecondaryClass}`}>Icon Buttons</div>
-            <div className="grid grid-cols-2 gap-1">
-              {getIconTemplates().map((template) => {
-                const IconComponent = template.icon;
-                const color = 'slate';
-                return (
-                  <button
-                    key={`icon-${template.name}`}
-                    onMouseDown={(e) => handleSidebarMouseDown(e, template)}
-                    className={`relative p-2 border-2 border-dashed rounded-lg transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
-                      ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
-                      : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="text-center space-y-3">
-                      <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${isDarkMode
-                        ? `bg-${color}-900/20 group-hover:bg-${color}-900/30`
-                        : `bg-${color}-100 group-hover:bg-${color}-200`
-                      }`}>
-                        <IconComponent className={`w-4 h-4 text-${color}-500 transition-colors`} />
-                      </div>
-                      <div>
-                        <h3 className={`font-medium text-[11px] ${textClass}`}>{template.name}</h3>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            )}
+            {(activeSidebarPanel === 'charts' || activeSidebarPanel === 'components') && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {(activeSidebarPanel === 'charts' ? getChartTemplates() : getComponentTemplates()).map((template) => {
+                    const IconComponent = template.icon;
+                    const colorMap: Record<string, {bg: string; text: string}> = {
+                      bar: { bg: isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100', text: 'text-blue-600' },
+                      donut: { bg: isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100', text: 'text-purple-600' },
+                      line: { bg: isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100', text: 'text-emerald-600' },
+                      area: { bg: isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100', text: 'text-orange-600' },
+                      combo: { bg: isDarkMode ? 'bg-cyan-900/30' : 'bg-cyan-100', text: 'text-cyan-600' },
+                      multibar: { bg: isDarkMode ? 'bg-teal-900/30' : 'bg-teal-100', text: 'text-teal-600' },
+                      table: { bg: isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100', text: 'text-indigo-600' },
+                      button: { bg: isDarkMode ? 'bg-slate-900/30' : 'bg-slate-100', text: 'text-slate-600' },
+                      iconbutton: { bg: isDarkMode ? 'bg-slate-900/30' : 'bg-slate-100', text: 'text-slate-600' },
+                      input: { bg: isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100', text: 'text-emerald-600' },
+                      text: { bg: isDarkMode ? 'bg-amber-900/30' : 'bg-amber-100', text: 'text-amber-600' },
+                      image: { bg: isDarkMode ? 'bg-rose-900/30' : 'bg-rose-100', text: 'text-rose-600' },
+                      card: { bg: isDarkMode ? 'bg-violet-900/30' : 'bg-violet-100', text: 'text-violet-600' },
+                      navigation: { bg: isDarkMode ? 'bg-sky-900/30' : 'bg-sky-100', text: 'text-sky-600' },
+                      dropdown: { bg: isDarkMode ? 'bg-lime-900/30' : 'bg-lime-100', text: 'text-lime-600' },
+                      checkbox: { bg: isDarkMode ? 'bg-pink-900/30' : 'bg-pink-100', text: 'text-pink-600' },
+                      radio: { bg: isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100', text: 'text-emerald-600' },
+                      progress: { bg: isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100', text: 'text-orange-600' },
+                      alert: { bg: isDarkMode ? 'bg-red-900/30' : 'bg-red-100', text: 'text-red-600' },
+                      avatar: { bg: isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100', text: 'text-blue-600' },
+                      badge: { bg: isDarkMode ? 'bg-green-900/30' : 'bg-green-100', text: 'text-green-600' },
+                      switch: { bg: isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100', text: 'text-purple-600' },
+                      slider: { bg: isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100', text: 'text-indigo-600' },
+                      textarea: { bg: isDarkMode ? 'bg-gray-900/30' : 'bg-gray-100', text: 'text-gray-600' },
+                      separator: { bg: isDarkMode ? 'bg-slate-900/30' : 'bg-slate-100', text: 'text-slate-600' },
+                    };
+                    const palette = colorMap[template.type as string] || { bg: isDarkMode ? 'bg-gray-800' : 'bg-gray-100', text: 'text-gray-600' };
+                    return (
+                      <button
+                        key={`${template.category}-${template.name}`}
+                        onMouseDown={(e) => handleSidebarMouseDown(e, template)}
+                        className={`relative p-2 border-2 border-dashed rounded-lg transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
+                          ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                          : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="text-center space-y-2">
+                          <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center ${palette.bg}`}>
+                            <IconComponent className={`w-4 h-4 ${palette.text}`} />
+                          </div>
+                          <div>
+                            <h3 className={`font-medium text-[11px] ${textClass}`}>{template.name}</h3>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {activeSidebarPanel === 'icons' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {getIconTemplates().map((template) => {
+                    const IconComponent = template.icon;
+                    return (
+                      <button
+                        key={`icon-${template.name}`}
+                        onMouseDown={(e) => handleSidebarMouseDown(e, template)}
+                        className={`relative p-2 border-2 border-dashed rounded-lg transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
+                          ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                          : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="text-center space-y-2">
+                          <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-pink-900/30' : 'bg-pink-100'}`}>
+                            <IconComponent className={`w-4 h-4 ${isDarkMode ? 'text-pink-400' : 'text-pink-600'}`} />
+                          </div>
+                          <div>
+                            <h3 className={`font-medium text-[11px] ${textClass}`}>{template.name}</h3>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
-          </div>
-          )}
-          
-          {/* Widget Summary removed */}
         </div>
-
-        {/* Footer removed */}
       </div>
+
+      {/* Backdrop when drawer open */}
+      {activeSidebarPanel && (
+        <div
+          className="fixed top-0 left-16 right-0 bottom-0 z-30 bg-black/30"
+          onClick={() => setActiveSidebarPanel(null)}
+        />
+      )}
 
       {/* Main Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <div className={`${headerBgClass} border-b ${borderClass} p-4`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <input
-                type="text"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
+            <div className="flex items-center gap-2">
+              <div className={`flex items-center px-2 py-1.5 rounded-lg border ${borderClass} ${isDarkMode ? 'bg-gray-800/60' : 'bg-white'} shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all`}>
+                <input
+                  ref={projectNameInputRef}
+                  type="text"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
                   disabled={isViewOnly}
-                  className={`text-lg font-medium bg-transparent border-none outline-none focus:bg-opacity-50 px-2 py-1 rounded transition-all duration-200 ${inputClass} ${isViewOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  className={`min-w-[160px] text-lg font-medium bg-transparent border-none outline-none ${isDarkMode ? 'placeholder-gray-400' : 'placeholder-gray-500'} ${isViewOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  placeholder="Untitled Project"
                 />
+                {!isViewOnly && (
+                  <button
+                    type="button"
+                    onClick={() => projectNameInputRef.current?.focus()}
+                    title="Rename project"
+                    className={` rounded-md transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'}`}
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
                 {isPublicAccess && (
                   <div className={`px-3 py-1 rounded-full text-xs font-medium ${isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
                     {isViewOnly ? '👁️ View Only' : '✏️ Can Edit'}

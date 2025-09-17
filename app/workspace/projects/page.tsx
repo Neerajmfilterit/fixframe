@@ -25,6 +25,8 @@ interface Project {
   updatedAt: string
   charts: any[]
   isPublic: boolean
+  pages?: Array<{ charts: any[] }>
+  chartsCount?: number
 }
  
 export default function ProjectsPage() {
@@ -41,6 +43,11 @@ export default function ProjectsPage() {
   const [showDeletePopup, setShowDeletePopup] = useState(false)
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [showEditPopup, setShowEditPopup] = useState(false)
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null)
+  const [editForm, setEditForm] = useState({ name: "", description: "" })
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
  
   useEffect(() => {
     fetchProjects()
@@ -103,6 +110,40 @@ export default function ProjectsPage() {
       setDeleting(false)
     }
   }
+
+  const openEditProject = (project: Project) => {
+    setProjectToEdit(project)
+    setEditForm({ name: project.name, description: project.description || "" })
+    setEditError(null)
+    setShowEditPopup(true)
+  }
+
+  const saveEditedProject = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!projectToEdit) return
+    setSavingEdit(true)
+    setEditError(null)
+    try {
+      const response = await fetch(`/api/projects/${projectToEdit._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editForm.name, description: editForm.description ?? "" })
+      })
+      const data = await response.json()
+      if (response.ok) {
+        // Update local list
+        setProjects(prev => prev.map(p => p._id === projectToEdit._id ? { ...p, name: editForm.name, description: editForm.description } : p))
+        setShowEditPopup(false)
+        setProjectToEdit(null)
+      } else {
+        setEditError(data.error || "Failed to update project")
+      }
+    } catch (err) {
+      setEditError("Network error. Please try again.")
+    } finally {
+      setSavingEdit(false)
+    }
+  }
  
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString()
@@ -113,6 +154,13 @@ export default function ProjectsPage() {
                          project.description.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch
   })
+
+  const getChartsCount = (project: Project) => {
+    if (typeof project.chartsCount === 'number') return project.chartsCount
+    if (Array.isArray(project.pages)) return project.pages.reduce((sum, p) => sum + (Array.isArray(p?.charts) ? p.charts.length : 0), 0)
+    if (Array.isArray(project.charts)) return project.charts.length
+    return 0
+  }
  
   if (loading) {
     return (
@@ -196,8 +244,15 @@ export default function ProjectsPage() {
             {filteredProjects.map((project) => (
               <div
                 key={project._id}
-                className="bg-white border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-lg transition-all duration-300"
+                className="relative bg-white border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-lg transition-all duration-300"
               >
+                <button
+                  onClick={() => openEditProject(project)}
+                  className="absolute top-3 right-3 p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                  title="Edit project"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
                 <div className="p-6">
                   <div className="mb-4">
                     <div className="flex items-center gap-2 mb-2">
@@ -216,7 +271,7 @@ export default function ProjectsPage() {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center">
                         <BarChart3 className="h-3 w-3 mr-2" />
-                        <span className="font-medium">{project.charts.length} charts</span>
+                        <span className="font-medium">{getChartsCount(project)} charts</span>
                       </div>
                       <div className="hidden sm:flex items-center">
                         <Clock className="h-3 w-3 mr-2" />
@@ -355,6 +410,78 @@ export default function ProjectsPage() {
                 {deleting ? "Deleting..." : "Delete"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Project Modal */}
+      {showEditPopup && projectToEdit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <Edit className="h-6 w-6 text-slate-700" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-slate-900">Edit Project</h3>
+                  <p className="text-sm text-slate-600">Update project details</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowEditPopup(false); setProjectToEdit(null) }}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={saveEditedProject} className="space-y-6">
+              {editError && (
+                <div className="px-4 py-3 rounded-lg bg-red-50 text-red-700 border border-red-200">
+                  {editError}
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">Project Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all"
+                  placeholder="Enter project name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">Description</label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none transition-all"
+                  placeholder="Describe your project goals and requirements..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-4 pt-6">
+                <button
+                  type="button"
+                  onClick={() => { setShowEditPopup(false); setProjectToEdit(null) }}
+                  className="px-6 py-3 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit || !editForm.name.trim()}
+                  className="px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {savingEdit ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
