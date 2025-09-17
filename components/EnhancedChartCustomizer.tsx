@@ -2492,7 +2492,7 @@ ${cleanProjectName}/
   React.useEffect(() => {
     if (!selectedChart) return; // Guard against null selectedChart
     
-    const isWireframe = ['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type);
+    const isWireframe = ['button', 'iconbutton', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type);
     if (isWireframe) {
       setActiveTab('data');
     } else if (activeTab === 'data' && !isWireframe) {
@@ -3758,7 +3758,7 @@ if __name__ == '__main__':
   };
 
   // Dynamic tabs based on component type
-  const isWireframeComponent = selectedChart ? ['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) : false;
+  const isWireframeComponent = selectedChart ? ['button', 'iconbutton', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) : false;
   
   const tabs = isWireframeComponent ? [
     { id: 'data', label: 'Properties', icon: Settings },
@@ -4140,7 +4140,7 @@ if __name__ == '__main__':
         {activeTab === 'data' && (
           <div className="flex flex-col">
             {/* File Upload Toggle and Section */}
-            {!['button', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) && (
+            {!['button', 'iconbutton', 'input', 'text', 'image', 'card', 'navigation', 'dropdown', 'checkbox', 'radio', 'progress', 'alert', 'avatar', 'badge', 'switch', 'slider', 'textarea', 'separator'].includes(selectedChart.type) && (
               <div className={`border-b ${borderClass}`}>
                 {/* Toggle Button */}
                 <div className={`p-4 ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50/30'}`}>
