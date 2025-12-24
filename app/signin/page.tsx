@@ -21,12 +21,14 @@ export default function SignInPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
+                credentials: "include",
             })
             const data = await res.json()
             if (res.ok) {
-                // Simulate auth for middleware protection
+                // Simulate auth for middleware protection and ensure cookies apply
                 document.cookie = `isAuthenticated=true; path=/`;
-                router.push("/workspace/projects" as any)
+                // Use a full navigation so server middleware and server-side APIs pick up cookies
+                window.location.href = "/workspace/projects"
             } else {
                 setError(data.error || "Login failed")
             }

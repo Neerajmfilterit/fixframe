@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  BarChart3, PieChart, Save, FolderOpen, FileText, 
+import {
+  BarChart3, PieChart, Save, FolderOpen, FileText,
   Download, Upload, Eye, EyeOff, Grid, Plus, Moon, Sun,
   TrendingUp, Activity, Table, BarChart2, Square, Type, Image,
   AlignLeft, Menu, ChevronDown, Check, MousePointer,
@@ -11,17 +11,19 @@ import {
   ChevronLeft, ChevronRight, X, Sparkles, Code,
   Share2, Circle, Home, Settings, Search, Bell, Heart, Star,
   Camera, Calendar, CheckCircle, XCircle, PlusCircle, MinusCircle,
-  Play, Pause, StopCircle as Stop, RefreshCw as Refresh, Lock, 
-  Unlock, Link, Cloud
+  Play, Pause, StopCircle as Stop, RefreshCw as Refresh, Lock,
+  Unlock, Link, Cloud,
+  Icon,
+  BoxIcon
 } from 'lucide-react';
 import { DarkModeBarChart, DarkModeDonutChart, DEFAULT_COLORS } from './DarkModeCharts';
 import { RechartsLineChart, RechartsAreaChart } from './RechartsComponents';
 import { ShadcnTable } from './ShadcnTable';
 import { ShadcnComboChart } from './ShadcnComboChart';
 import ShadcnMultiBarChart, { MultiBarChartData } from './ShadcnMultiBarChart';
-import { 
+import {
   WireframeButton, WireframeInput, WireframeText, WireframeImage,
-  WireframeCard, WireframeNavigation, WireframeDropdown, 
+  WireframeCard, WireframeNavigation, WireframeDropdown,
   WireframeCheckbox, WireframeProgress, WireframeAlert,
   WireframeAvatar, WireframeBadge, WireframeSwitch,
   WireframeSlider, WireframeTextarea, WireframeSeparator,
@@ -91,7 +93,7 @@ const CHART_TEMPLATES = [
   },
   {
     type: 'donut' as const,
-    name: 'Donut Chart', 
+    name: 'Donut Chart',
     icon: PieChart,
     category: 'charts',
     defaultData: [
@@ -484,10 +486,10 @@ interface UltimateWireframeBuilderProps {
   onThemeChange?: (isDark: boolean) => void;
 }
 
-export default function UltimateWireframeBuilder({ 
-  projectId, 
-  initialProject, 
-  onThemeChange 
+export default function UltimateWireframeBuilder({
+  projectId,
+  initialProject,
+  onThemeChange
 }: UltimateWireframeBuilderProps = {}) {
   const [charts, setCharts] = useState<Chart[]>([]);
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
@@ -507,7 +509,7 @@ export default function UltimateWireframeBuilder({
   const [activeSidebarPanel, setActiveSidebarPanel] = useState<null | 'charts' | 'components' | 'slides' | 'icons'>(null);
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [contextMenu, setContextMenu] = useState<{visible: boolean; x: number; y: number; chartId: string | null}>({ visible: false, x: 0, y: 0, chartId: null });
+  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; chartId: string | null }>({ visible: false, x: 0, y: 0, chartId: null });
   const [showShareModal, setShowShareModal] = useState(false);
   const [showPdfOptions, setShowPdfOptions] = useState(false);
   const [selectedSlides, setSelectedSlides] = useState<string[]>([]);
@@ -542,7 +544,7 @@ export default function UltimateWireframeBuilder({
       // Check if this is a shared project and set permissions
       if (initialProject.isShared || initialProject.isPublicAccess) {
         setIsPublicAccess(true);
-        
+
         // Set view-only mode based on permission level
         if (initialProject.userPermission === 'view') {
           setIsViewOnly(true);
@@ -550,7 +552,7 @@ export default function UltimateWireframeBuilder({
           setIsViewOnly(false); // Edit permission allows editing
         }
       }
-      
+
       // Handle both old format (charts) and new format (pages)
       if (initialProject.pages) {
         setPages(initialProject.pages);
@@ -566,17 +568,17 @@ export default function UltimateWireframeBuilder({
         setPages(convertedPages);
         setCurrentPageId('page-1');
       }
-      
+
       if (typeof initialProject.isDarkMode === 'boolean') {
         setIsDarkMode(initialProject.isDarkMode);
       }
     } else {
       // Fallback to localStorage
-    const currentWireframe = localStorage.getItem('currentWireframe');
-    if (currentWireframe) {
-      try {
-        const wireframeData = JSON.parse(currentWireframe);
-          
+      const currentWireframe = localStorage.getItem('currentWireframe');
+      if (currentWireframe) {
+        try {
+          const wireframeData = JSON.parse(currentWireframe);
+
           // Handle both old format (charts) and new format (pages)
           if (wireframeData.pages) {
             setPages(wireframeData.pages);
@@ -592,23 +594,23 @@ export default function UltimateWireframeBuilder({
             setPages(convertedPages);
             setCurrentPageId('page-1');
           }
-          
-        if (wireframeData.projectName) {
-          setProjectName(wireframeData.projectName);
-        }
+
+          if (wireframeData.projectName) {
+            setProjectName(wireframeData.projectName);
+          }
           // Always default to dark mode, ignore saved preference
           setIsDarkMode(true);
-          
+
           // Update localStorage to ensure dark mode is saved
           const updatedWireframeData = {
             ...wireframeData,
             isDarkMode: true
           };
           localStorage.setItem('currentWireframe', JSON.stringify(updatedWireframeData));
-      } catch (error) {
-        console.error('Error loading project data:', error);
+        } catch (error) {
+          console.error('Error loading project data:', error);
+        }
       }
-    }
     }
   }, [initialProject]);
 
@@ -676,7 +678,7 @@ export default function UltimateWireframeBuilder({
     };
 
     const dimensions = getChartDimensions(template.type);
-    
+
     const newChart: Chart = {
       id: `${template.type}-${Date.now()}`,
       type: template.type,
@@ -685,8 +687,8 @@ export default function UltimateWireframeBuilder({
       y: y !== undefined ? y : Math.random() * 200 + 50,
       width: dimensions.width,
       height: dimensions.height,
-      data: Array.isArray(template.defaultData) 
-        ? [...template.defaultData] 
+      data: Array.isArray(template.defaultData)
+        ? [...template.defaultData]
         : JSON.parse(JSON.stringify(template.defaultData)),
       titleColor: isDarkMode ? '#F3F4F6' : '#1F2937',
       titleSize: 16,
@@ -694,22 +696,22 @@ export default function UltimateWireframeBuilder({
       comments: [],
       pageId: currentPageId
     };
-    
+
     // Add chart to current page
-    setPages(prev => prev.map(page => 
-      page.id === currentPageId 
+    setPages(prev => prev.map(page =>
+      page.id === currentPageId
         ? { ...page, charts: [...page.charts, newChart] }
         : page
     ));
-    
+
     setSelectedChart(newChart.id);
   };
 
   const updateChart = (id: string, updates: Partial<Chart>) => {
     setPages(prev => prev.map(page => ({
       ...page,
-      charts: page.charts.map(chart => 
-      chart.id === id ? { ...chart, ...updates } : chart
+      charts: page.charts.map(chart =>
+        chart.id === id ? { ...chart, ...updates } : chart
       )
     })));
   };
@@ -737,10 +739,10 @@ export default function UltimateWireframeBuilder({
 
     setPages(prev => prev.map(page => ({
       ...page,
-      charts: page.charts.map(chart => 
-      chart.id === chartId 
+      charts: page.charts.map(chart =>
+        chart.id === chartId
           ? { ...chart, comments: [...(chart.comments || []), newComment] }
-        : chart
+          : chart
       )
     })));
   };
@@ -748,17 +750,17 @@ export default function UltimateWireframeBuilder({
   const resolveComment = (chartId: string, commentId: string) => {
     setPages(prev => prev.map(page => ({
       ...page,
-      charts: page.charts.map(chart => 
-      chart.id === chartId 
-        ? {
-            ...chart, 
+      charts: page.charts.map(chart =>
+        chart.id === chartId
+          ? {
+            ...chart,
             comments: (chart.comments || []).map(comment =>
-              comment.id === commentId 
+              comment.id === commentId
                 ? { ...comment, resolved: !comment.resolved }
                 : comment
             )
           }
-        : chart
+          : chart
       )
     })));
   };
@@ -766,13 +768,13 @@ export default function UltimateWireframeBuilder({
   const deleteComment = (chartId: string, commentId: string) => {
     setPages(prev => prev.map(page => ({
       ...page,
-      charts: page.charts.map(chart => 
-      chart.id === chartId 
-        ? {
-            ...chart, 
+      charts: page.charts.map(chart =>
+        chart.id === chartId
+          ? {
+            ...chart,
             comments: (chart.comments || []).filter(comment => comment.id !== commentId)
           }
-        : chart
+          : chart
       )
     })));
   };
@@ -788,27 +790,27 @@ export default function UltimateWireframeBuilder({
 
     setPages(prev => prev.map(page => ({
       ...page,
-      charts: page.charts.map(chart => 
-      chart.id === chartId 
-        ? {
-            ...chart, 
+      charts: page.charts.map(chart =>
+        chart.id === chartId
+          ? {
+            ...chart,
             comments: (chart.comments || []).map(comment =>
-              comment.id === commentId 
-                ? { 
-                    ...comment, 
-                    replies: [...(comment.replies || []), newReply] 
-                  }
+              comment.id === commentId
+                ? {
+                  ...comment,
+                  replies: [...(comment.replies || []), newReply]
+                }
                 : comment
             )
           }
-        : chart
+          : chart
       )
     })));
   };
 
   const handleMouseDown = (e: React.MouseEvent, chartId: string) => {
     if (isViewOnly) return; // Disable dragging in view-only mode
-    
+
     const currentPageCharts = getCurrentPageCharts();
     const chart = currentPageCharts.find(c => c.id === chartId);
     if (!chart) return;
@@ -873,14 +875,14 @@ export default function UltimateWireframeBuilder({
       const x = e.pageX - canvasRect.left - dragOffset.x;
       const y = e.pageY - canvasRect.top - dragOffset.y;
 
-    // Use chart's actual dimensions for boundary constraints
-    const maxX = canvasRef.current.scrollWidth - chart.width;
-    const maxY = canvasRef.current.scrollHeight - chart.height;
+      // Use chart's actual dimensions for boundary constraints
+      const maxX = canvasRef.current.scrollWidth - chart.width;
+      const maxY = canvasRef.current.scrollHeight - chart.height;
 
-    updateChart(draggedChart, {
-      x: Math.max(0, Math.min(x, maxX)),
-      y: Math.max(0, Math.min(y, maxY))
-    });
+      updateChart(draggedChart, {
+        x: Math.max(0, Math.min(x, maxX)),
+        y: Math.max(0, Math.min(y, maxY))
+      });
     }
 
     setDraggedChart(null);
@@ -1011,7 +1013,7 @@ export default function UltimateWireframeBuilder({
   // Handle drag start from sidebar
   const handleSidebarMouseDown = (e: React.MouseEvent, template: typeof CHART_TEMPLATES[0]) => {
     if (isViewOnly) return; // Disable sidebar dragging in view-only mode
-    
+
     e.preventDefault();
     setDraggedTemplate(template);
     setIsDraggingFromSidebar(true);
@@ -1023,7 +1025,7 @@ export default function UltimateWireframeBuilder({
       x: e.pageX - rect.left,
       y: e.pageY - rect.top
     };
-    
+
     // Store in both state and ref for synchronous access
     setDragOffset(offset);
     dragOffsetRef.current = offset;
@@ -1050,13 +1052,13 @@ export default function UltimateWireframeBuilder({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    
+
     // Calculate drop coordinates relative to canvas container
     // Use pageX/pageY which already includes scroll, and ref-based offset for precise positioning
     const dropX = e.pageX - rect.left - dragOffsetRef.current.x;
     const dropY = e.pageY - rect.top - dragOffsetRef.current.y;
 
-    
+
 
     // Get actual template dimensions for boundary checking
     const getTemplateDimensions = (type: string) => {
@@ -1103,7 +1105,7 @@ export default function UltimateWireframeBuilder({
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       if (draggedChart) {
-      handleMouseMove(e);
+        handleMouseMove(e);
       } else if (isDraggingFromSidebar) {
         handleSidebarMouseMove(e);
       }
@@ -1141,7 +1143,7 @@ export default function UltimateWireframeBuilder({
       charts: [],
       isActive: false
     };
-    
+
     setPages(prev => prev.map(p => ({ ...p, isActive: false })).concat(newPage));
     setCurrentPageId(newPageId);
   };
@@ -1154,7 +1156,7 @@ export default function UltimateWireframeBuilder({
 
   const deletePage = (pageId: string) => {
     if (pages.length <= 1) return; // Don't delete the last page
-    
+
     setPages(prev => {
       const filtered = prev.filter(p => p.id !== pageId);
       // If deleting current page, switch to first available page
@@ -1190,7 +1192,7 @@ export default function UltimateWireframeBuilder({
   };
 
   const renamePage = (pageId: string, newName: string) => {
-    setPages(prev => prev.map(p => 
+    setPages(prev => prev.map(p =>
       p.id === pageId ? { ...p, name: newName } : p
     ));
   };
@@ -1201,31 +1203,31 @@ export default function UltimateWireframeBuilder({
   const saveWireframe = async () => {
     setIsSaving(true);
     const start = Date.now();
-    
+
     try {
-    const wireframeData = {
-      version: '2.0',
-      timestamp: new Date().toISOString(),
-      projectName,
-      isDarkMode,
+      const wireframeData = {
+        version: '2.0',
+        timestamp: new Date().toISOString(),
+        projectName,
+        isDarkMode,
         pages: pages.map(page => ({ ...page })),
         currentPageId
-    };
+      };
 
       // Save to localStorage as backup
-    localStorage.setItem('currentWireframe', JSON.stringify(wireframeData));
-    
-    const savedWireframes = JSON.parse(localStorage.getItem('savedWireframes') || '[]');
-    const existingIndex = savedWireframes.findIndex((w: any) => w.projectName === projectName);
-    
-    if (existingIndex >= 0) {
-      savedWireframes[existingIndex] = wireframeData;
-    } else {
-      savedWireframes.push(wireframeData);
-    }
-    
-    localStorage.setItem('savedWireframes', JSON.stringify(savedWireframes));
-    
+      localStorage.setItem('currentWireframe', JSON.stringify(wireframeData));
+
+      const savedWireframes = JSON.parse(localStorage.getItem('savedWireframes') || '[]');
+      const existingIndex = savedWireframes.findIndex((w: any) => w.projectName === projectName);
+
+      if (existingIndex >= 0) {
+        savedWireframes[existingIndex] = wireframeData;
+      } else {
+        savedWireframes.push(wireframeData);
+      }
+
+      localStorage.setItem('savedWireframes', JSON.stringify(savedWireframes));
+
       // Save to MongoDB if projectId is available
       if (projectId) {
         const response = await fetch(`/api/projects/${projectId}`, {
@@ -1270,7 +1272,7 @@ export default function UltimateWireframeBuilder({
       pages,
       currentPageId
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1283,11 +1285,11 @@ export default function UltimateWireframeBuilder({
   const selectAllSlides = () => {
     setSelectedSlides(pages.map(page => page.id));
   };
-  
+
   const toggleSlideSelection = (slideId: string) => {
-    setSelectedSlides(prev => 
-      prev.includes(slideId) 
-        ? prev.filter(id => id !== slideId) 
+    setSelectedSlides(prev =>
+      prev.includes(slideId)
+        ? prev.filter(id => id !== slideId)
         : [...prev, slideId]
     );
   };
@@ -1331,19 +1333,19 @@ export default function UltimateWireframeBuilder({
 
   const exportAsPDF = async (exportType: 'all' | 'current' | 'selected' = 'all') => {
     if (!canvasRef.current) return;
-    
+
     try {
       // Show loading state
       setIsSaving(true);
-      
+
       // Temporarily hide the customization panel for clean export
       const customizer = document.querySelector('[data-customizer]') as HTMLElement;
       const originalDisplay = customizer?.style.display;
       if (customizer) customizer.style.display = 'none';
-      
+
       // Small delay to ensure all charts are fully rendered
       await new Promise(resolve => setTimeout(resolve, 100));
-     
+
       // Use landscape orientation for better chart display
       const pdf = new jsPDF('l', 'mm', 'a4'); // landscape orientation
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -1351,10 +1353,10 @@ export default function UltimateWireframeBuilder({
       const margin = 10; // 10mm margin
       const maxWidth = pageWidth - (margin * 2);
       const maxHeight = pageHeight - (margin * 2);
-     
+
       // Store original page state
       const originalPageId = currentPageId;
-     
+
       // Determine which pages to export
       let pagesToExport;
       if (exportType === 'current') {
@@ -1364,30 +1366,30 @@ export default function UltimateWireframeBuilder({
       } else {
         pagesToExport = pages;
       }
-     
+
       // Process each slide/page
       for (let i = 0; i < pagesToExport.length; i++) {
         const page = pagesToExport[i];
-       
+
         // Switch to this page
         if (page) {
           setCurrentPageId(page.id);
         }
-       
+
         // Wait for page switch and chart rendering to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
-       
+
         // Force a re-render by triggering a resize event
         window.dispatchEvent(new Event('resize'));
         await new Promise(resolve => setTimeout(resolve, 500));
-       
+
         // Create canvas from the visible chart area for this page
         let canvas;
         try {
           canvas = await html2canvas(canvasRef.current, {
             background: isDarkMode ? '#111827' : '#ffffff',
-        useCORS: true,
-        allowTaint: true,
+            useCORS: true,
+            allowTaint: true,
             width: canvasRef.current.clientWidth,
             height: canvasRef.current.clientHeight,
             logging: true // Enable logging to debug
@@ -1402,53 +1404,53 @@ export default function UltimateWireframeBuilder({
             logging: true
           });
         }
-       
+
         // Add page title if not the first page
         if (i > 0) {
           pdf.addPage();
         }
-       
+
         // Add slide title at the top
         pdf.setFontSize(16);
         pdf.setFont('helvetica', 'bold');
         if (page) {
           pdf.text(page.name, margin, margin + 5);
         }
-       
+
         // Add a line separator
         pdf.setLineWidth(0.5);
         pdf.line(margin, margin + 8, pageWidth - margin, margin + 8);
-       
+
         // Calculate dimensions to fit the chart area (below title)
         const titleHeight = 15; // Space for title and line
         const availableHeight = maxHeight - titleHeight;
         const availableWidth = maxWidth;
-       
+
         const scaleX = availableWidth / canvas.width;
         const scaleY = availableHeight / canvas.height;
         const scale = Math.min(scaleX, scaleY);
-       
+
         const imgWidth = canvas.width * scale;
         const imgHeight = canvas.height * scale;
-       
+
         // Center the image on the page (below title)
         const x = (pageWidth - imgWidth) / 2;
         const y = margin + titleHeight + (availableHeight - imgHeight) / 2;
-       
+
         // Debug: Log canvas info
         console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
         console.log('Canvas data URL length:', canvas.toDataURL('image/png').length);
-       
+
         // Add image to PDF
         pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, imgWidth, imgHeight);
       }
-     
+
       // Restore original page
       setCurrentPageId(originalPageId);
-     
+
       // Restore customization panel
       if (customizer) customizer.style.display = originalDisplay || '';
-     
+
       // Save PDF with appropriate filename
       let filename;
       if (exportType === 'current') {
@@ -1459,7 +1461,7 @@ export default function UltimateWireframeBuilder({
         filename = `${projectName.replace(/\s+/g, '_')}_presentation.pdf`;
       }
       pdf.save(filename);
-      
+
     } catch (error) {
       console.error('PDF export failed:', error);
       alert('Failed to export PDF. Please try again.');
@@ -1563,8 +1565,8 @@ export default function UltimateWireframeBuilder({
   const textClass = isDarkMode ? 'text-gray-100' : 'text-gray-900';
   const textSecondaryClass = isDarkMode ? 'text-gray-400' : 'text-gray-600';
   const headerBgClass = isDarkMode ? 'bg-gray-800' : 'bg-white';
-  const inputClass = isDarkMode 
-    ? 'bg-gray-700 border-gray-600 text-gray-100' 
+  const inputClass = isDarkMode
+    ? 'bg-gray-700 border-gray-600 text-gray-100'
     : 'bg-white border-gray-300 text-gray-900';
 
   return (
@@ -1604,605 +1606,601 @@ export default function UltimateWireframeBuilder({
           background: ${isDarkMode ? '#111827' : '#f8fafc'};
         }
       `}</style>
-    <div className={`h-screen ${bgClass} flex`}>
-      {/* Vertical Sidebar - Navigation */}
-      <div className={`w-16 ${sidebarBgClass} border-r ${borderClass} flex flex-col items-stretch ${textClass} ${isViewOnly ? 'opacity-60' : ''} relative z-50`}>
-        {/* Tabs */}
-        <div className="flex-1 py-12 flex flex-col items-stretch">
-          <button
-            title="Charts"
-            onClick={() => setActiveSidebarPanel(p => p === 'charts' ? null : 'charts')}
-            className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'charts' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
-          >
-            {activeSidebarPanel === 'charts' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`} />}
-            <BarChart3 className={`w-5 h-5 ${activeSidebarPanel === 'charts' ? 'text-blue-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-            <span
-              className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
-            >
-              Charts
-            </span>
-          </button>
-          <button
-            title="Components"
-            onClick={() => setActiveSidebarPanel(p => p === 'components' ? null : 'components')}
-            className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'components' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
-          >
-            {activeSidebarPanel === 'components' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-indigo-500' : 'bg-indigo-600'}`} />}
-            <Table className={`w-5 h-5 ${activeSidebarPanel === 'components' ? 'text-indigo-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-            <span
-              className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
-            >
-              Components
-            </span>
-          </button>
-          <button
-            title="Slides"
-            onClick={() => setActiveSidebarPanel(p => p === 'slides' ? null : 'slides')}
-            className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'slides' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
-          >
-            {activeSidebarPanel === 'slides' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-emerald-500' : 'bg-emerald-600'}`} />}
-            <Layers className={`w-5 h-5 ${activeSidebarPanel === 'slides' ? 'text-emerald-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-            <span
-              className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
-            >
-              Slides
-            </span>
-          </button>
-          <button
-            title="Icons"
-            onClick={() => setActiveSidebarPanel(p => p === 'icons' ? null : 'icons')}
-            className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'icons' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
-          >
-            {activeSidebarPanel === 'icons' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-pink-500' : 'bg-pink-600'}`} />}
-            <Square className={`w-5 h-5 ${activeSidebarPanel === 'icons' ? 'text-pink-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-            <span
-              className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
-            >
-              Icons
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* Sliding Drawer Panel (overlays content) */}
-      <div className={`fixed top-0 left-16 h-screen z-40 transition-transform duration-300 ease-in-out ${activeSidebarPanel ? 'translate-x-0' : '-translate-x-full'}`}
-        style={{ width: '20rem' }}
-      >
-        <div className={`${sidebarBgClass} h-full border-r ${borderClass} flex flex-col shadow-xl`}> 
-          <div className={`p-3 border-b ${borderClass} flex items-center justify-between sticky top-0`}>
-            <div className={`text-sm font-semibold ${textClass}`}>
-              {activeSidebarPanel === 'charts' && 'Charts'}
-              {activeSidebarPanel === 'components' && 'Components'}
-              {activeSidebarPanel === 'slides' && 'Slides'}
-              {activeSidebarPanel === 'icons' && 'Icons'}
-            </div>
+      <div className={`h-screen ${bgClass} flex`}>
+        {/* Vertical Sidebar - Navigation */}
+        <div className={`w-16 ${sidebarBgClass} border-r ${borderClass} flex flex-col items-stretch ${textClass} ${isViewOnly ? 'opacity-60' : ''} relative z-50`}>
+          {/* Tabs */}
+          <div className="flex-1 py-12 flex flex-col items-stretch">
             <button
-              onClick={() => setActiveSidebarPanel(null)}
-              className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              title="Charts"
+              onClick={() => setActiveSidebarPanel(p => p === 'charts' ? null : 'charts')}
+              className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'charts' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
             >
-              <X className="w-4 h-4" />
+              {activeSidebarPanel === 'charts' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`} />}
+              <BarChart3 className={`w-5 h-5 ${activeSidebarPanel === 'charts' ? 'text-blue-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+              <span
+                className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
+              >
+                Charts
+              </span>
+            </button>
+            <button
+              title="Components"
+              onClick={() => setActiveSidebarPanel(p => p === 'components' ? null : 'components')}
+              className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'components' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
+            >
+              {activeSidebarPanel === 'components' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-indigo-500' : 'bg-indigo-600'}`} />}
+              <Table className={`w-5 h-5 ${activeSidebarPanel === 'components' ? 'text-indigo-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+              <span
+                className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
+              >
+                Components
+              </span>
+            </button>
+            <button
+              title="Slides"
+              onClick={() => setActiveSidebarPanel(p => p === 'slides' ? null : 'slides')}
+              className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'slides' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
+            >
+              {activeSidebarPanel === 'slides' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-emerald-500' : 'bg-emerald-600'}`} />}
+              <Layers className={`w-5 h-5 ${activeSidebarPanel === 'slides' ? 'text-emerald-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+              <span
+                className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
+              >
+                Slides
+              </span>
+            </button>
+            <button
+              title="Icons"
+              onClick={() => setActiveSidebarPanel(p => p === 'icons' ? null : 'icons')}
+              className={`group relative w-full h-12 flex items-center justify-center gap-2 transition-colors hover:bg-gray-500/10 focus:outline-none ${activeSidebarPanel === 'icons' ? (isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100') : ''}`}
+            >
+              {activeSidebarPanel === 'icons' && <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDarkMode ? 'bg-pink-500' : 'bg-pink-600'}`} />}
+              <BoxIcon className={`w-5 h-5 ${activeSidebarPanel === 'icons' ? 'text-pink-500' : isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+              <span
+                className={`pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap px-2 py-1 rounded-md shadow-lg text-xs border ${borderClass} z-50 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
+              >
+                Icons
+              </span>
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 sidebar-scrollbar">
-            {activeSidebarPanel === 'slides' && (
-              <div className="space-y-4">
-                <button
-                  onClick={addNewPage}
-                  className={`w-full px-4 py-3 rounded-lg transition-colors flex items-center gap-2 ${isDarkMode
-                    ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30'
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                  }`}
-                >
-                  <Plus className="w-5 h-5" />
-                  New Slide
-                </button>
-                <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className={`font-medium ${textClass}`}>{getCurrentPage()?.name || 'Slide 1'}</div>
-                      <div className={`text-xs ${textSecondaryClass}`}>{getCurrentPageCharts().length} {getCurrentPageCharts().length === 1 ? 'element' : 'elements'}</div>
-                    </div>
-                    <div className={`text-xs ${textSecondaryClass}`}>{pages.length} {pages.length === 1 ? 'slide' : 'slides'}</div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {pages.map((page, index) => (
-                    <div
-                      key={page.id}
-                      className={`p-3 rounded-lg border transition-colors cursor-pointer ${page.id === currentPageId
-                        ? isDarkMode
-                          ? 'bg-blue-900/30 border-blue-600 text-blue-400'
-                          : 'bg-blue-100 border-blue-300 text-blue-700'
-                        : isDarkMode
-                          ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
-                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+        </div>
+
+        {/* Sliding Drawer Panel (overlays content) */}
+        <div className={`fixed top-0 left-16 h-screen z-40 transition-transform duration-300 ease-in-out ${activeSidebarPanel ? 'translate-x-0' : '-translate-x-full'}`}
+          style={{ width: '20rem' }}
+        >
+          <div className={`${sidebarBgClass} h-full border-r ${borderClass} flex flex-col shadow-xl`}>
+            <div className={`p-3 border-b ${borderClass} flex items-center justify-between sticky top-0`}>
+              <div className={`text-sm font-semibold ${textClass}`}>
+                {activeSidebarPanel === 'charts' && 'Charts'}
+                {activeSidebarPanel === 'components' && 'Components'}
+                {activeSidebarPanel === 'slides' && 'Slides'}
+                {activeSidebarPanel === 'icons' && 'Icons'}
+              </div>
+              <button
+                onClick={() => setActiveSidebarPanel(null)}
+                className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 sidebar-scrollbar">
+              {activeSidebarPanel === 'slides' && (
+                <div className="space-y-4">
+                  <button
+                    onClick={addNewPage}
+                    className={`w-full px-4 py-3 rounded-lg transition-colors flex items-center gap-2 ${isDarkMode
+                      ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30'
+                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                       }`}
-                      onClick={() => switchToPage(page.id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium ${page.id === currentPageId
-                            ? isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
-                            : isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-400 text-white'
-                          }`}>
-                            {index + 1}
-                          </div>
-                          <div>
-                            {editingPageId === page.id ? (
-                              <input
-                                autoFocus
-                                value={editingPageName}
-                                onChange={(e) => setEditingPageName(e.target.value)}
-                                onBlur={() => {
-                                  if (editingPageName.trim()) {
-                                    renamePage(page.id, editingPageName.trim());
-                                  }
-                                  setEditingPageId(null);
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
+                  >
+                    <Plus className="w-5 h-5" />
+                    New Slide
+                  </button>
+                  <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className={`font-medium ${textClass}`}>{getCurrentPage()?.name || 'Slide 1'}</div>
+                        <div className={`text-xs ${textSecondaryClass}`}>{getCurrentPageCharts().length} {getCurrentPageCharts().length === 1 ? 'element' : 'elements'}</div>
+                      </div>
+                      <div className={`text-xs ${textSecondaryClass}`}>{pages.length} {pages.length === 1 ? 'slide' : 'slides'}</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {pages.map((page, index) => (
+                      <div
+                        key={page.id}
+                        className={`p-3 rounded-lg border transition-colors cursor-pointer ${page.id === currentPageId
+                          ? isDarkMode
+                            ? 'bg-blue-900/30 border-blue-600 text-blue-400'
+                            : 'bg-blue-100 border-blue-300 text-blue-700'
+                          : isDarkMode
+                            ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                            : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                          }`}
+                        onClick={() => switchToPage(page.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium ${page.id === currentPageId
+                              ? isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
+                              : isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-400 text-white'
+                              }`}>
+                              {index + 1}
+                            </div>
+                            <div>
+                              {editingPageId === page.id ? (
+                                <input
+                                  autoFocus
+                                  value={editingPageName}
+                                  onChange={(e) => setEditingPageName(e.target.value)}
+                                  onBlur={() => {
                                     if (editingPageName.trim()) {
                                       renamePage(page.id, editingPageName.trim());
                                     }
                                     setEditingPageId(null);
-                                  }
-                                  if (e.key === 'Escape') {
-                                    setEditingPageId(null);
-                                    setEditingPageName(page.name);
-                                  }
-                                }}
-                                className={`px-2 py-1 text-sm rounded border ${borderClass} ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
-                              />
-                            ) : (
-                              <div className="flex items-center gap-1">
-                                <div className="font-medium">{page.name}</div>
-                                <button
-                                  type="button"
-                                  onClick={(e) => { e.stopPropagation(); setEditingPageId(page.id); setEditingPageName(page.name); }}
-                                  title="Rename slide"
-                                  className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-600 text-gray-300' : 'hover:bg-gray-200 text-gray-600'}`}
-                                >
-                                  <Edit3 className="w-3 h-3" />
-                                </button>
-                              </div>
-                            )}
-                            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{page.charts.length} {page.charts.length === 1 ? 'element' : 'elements'}</div>
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      if (editingPageName.trim()) {
+                                        renamePage(page.id, editingPageName.trim());
+                                      }
+                                      setEditingPageId(null);
+                                    }
+                                    if (e.key === 'Escape') {
+                                      setEditingPageId(null);
+                                      setEditingPageName(page.name);
+                                    }
+                                  }}
+                                  className={`px-2 py-1 text-sm rounded border ${borderClass} ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}
+                                />
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <div className="font-medium">{page.name}</div>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setEditingPageId(page.id); setEditingPageName(page.name); }}
+                                    title="Rename slide"
+                                    className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-600 text-gray-300' : 'hover:bg-gray-200 text-gray-600'}`}
+                                  >
+                                    <Edit3 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              )}
+                              <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{page.charts.length} {page.charts.length === 1 ? 'element' : 'elements'}</div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); duplicatePage(page.id); }}
-                            className={`p-1 rounded transition-colors ${isDarkMode ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-300' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'}`}
-                            title="Duplicate slide"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </button>
-                          {pages.length > 1 && (
+                          <div className="flex items-center gap-1">
                             <button
-                              onClick={(e) => { e.stopPropagation(); deletePage(page.id); }}
-                              className={`p-1 rounded transition-colors ${isDarkMode ? 'hover:bg-red-900/30 text-gray-400 hover:text-red-400' : 'hover:bg-red-100 text-gray-500 hover:text-red-600'}`}
-                              title="Delete slide"
+                              onClick={(e) => { e.stopPropagation(); duplicatePage(page.id); }}
+                              className={`p-1 rounded transition-colors ${isDarkMode ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-300' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'}`}
+                              title="Duplicate slide"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Copy className="w-4 h-4" />
                             </button>
-                          )}
+                            {pages.length > 1 && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); deletePage(page.id); }}
+                                className={`p-1 rounded transition-colors ${isDarkMode ? 'hover:bg-red-900/30 text-gray-400 hover:text-red-400' : 'hover:bg-red-100 text-gray-500 hover:text-red-600'}`}
+                                title="Delete slide"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-            {(activeSidebarPanel === 'charts' || activeSidebarPanel === 'components') && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  {(activeSidebarPanel === 'charts' ? getChartTemplates() : getComponentTemplates()).map((template) => {
-                    const IconComponent = template.icon;
-                    const colorMap: Record<string, {bg: string; text: string}> = {
-                      bar: { bg: isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100', text: 'text-blue-600' },
-                      donut: { bg: isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100', text: 'text-purple-600' },
-                      line: { bg: isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100', text: 'text-emerald-600' },
-                      area: { bg: isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100', text: 'text-orange-600' },
-                      combo: { bg: isDarkMode ? 'bg-cyan-900/30' : 'bg-cyan-100', text: 'text-cyan-600' },
-                      multibar: { bg: isDarkMode ? 'bg-teal-900/30' : 'bg-teal-100', text: 'text-teal-600' },
-                      table: { bg: isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100', text: 'text-indigo-600' },
-                      button: { bg: isDarkMode ? 'bg-slate-900/30' : 'bg-slate-100', text: 'text-slate-600' },
-                      iconbutton: { bg: isDarkMode ? 'bg-slate-900/30' : 'bg-slate-100', text: 'text-slate-600' },
-                      input: { bg: isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100', text: 'text-emerald-600' },
-                      text: { bg: isDarkMode ? 'bg-amber-900/30' : 'bg-amber-100', text: 'text-amber-600' },
-                      image: { bg: isDarkMode ? 'bg-rose-900/30' : 'bg-rose-100', text: 'text-rose-600' },
-                      card: { bg: isDarkMode ? 'bg-violet-900/30' : 'bg-violet-100', text: 'text-violet-600' },
-                      navigation: { bg: isDarkMode ? 'bg-sky-900/30' : 'bg-sky-100', text: 'text-sky-600' },
-                      dropdown: { bg: isDarkMode ? 'bg-lime-900/30' : 'bg-lime-100', text: 'text-lime-600' },
-                      checkbox: { bg: isDarkMode ? 'bg-pink-900/30' : 'bg-pink-100', text: 'text-pink-600' },
-                      radio: { bg: isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100', text: 'text-emerald-600' },
-                      progress: { bg: isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100', text: 'text-orange-600' },
-                      alert: { bg: isDarkMode ? 'bg-red-900/30' : 'bg-red-100', text: 'text-red-600' },
-                      avatar: { bg: isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100', text: 'text-blue-600' },
-                      badge: { bg: isDarkMode ? 'bg-green-900/30' : 'bg-green-100', text: 'text-green-600' },
-                      switch: { bg: isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100', text: 'text-purple-600' },
-                      slider: { bg: isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100', text: 'text-indigo-600' },
-                      textarea: { bg: isDarkMode ? 'bg-gray-900/30' : 'bg-gray-100', text: 'text-gray-600' },
-                      separator: { bg: isDarkMode ? 'bg-slate-900/30' : 'bg-slate-100', text: 'text-slate-600' },
-                    };
-                    const palette = colorMap[template.type as string] || { bg: isDarkMode ? 'bg-gray-800' : 'bg-gray-100', text: 'text-gray-600' };
-                    return (
-                      <button
-                        key={`${template.category}-${template.name}`}
-                        onMouseDown={(e) => handleSidebarMouseDown(e, template)}
-                        className={`relative p-2 border-2 border-dashed rounded-lg transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
-                          ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
-                          : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="text-center space-y-2">
-                          <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center ${palette.bg}`}>
-                            <IconComponent className={`w-4 h-4 ${palette.text}`} />
+              )}
+              {(activeSidebarPanel === 'charts' || activeSidebarPanel === 'components') && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {(activeSidebarPanel === 'charts' ? getChartTemplates() : getComponentTemplates()).map((template) => {
+                      const IconComponent = template.icon;
+                      const colorMap: Record<string, { bg: string; text: string }> = {
+                        bar: { bg: isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100', text: 'text-blue-600' },
+                        donut: { bg: isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100', text: 'text-purple-600' },
+                        line: { bg: isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100', text: 'text-emerald-600' },
+                        area: { bg: isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100', text: 'text-orange-600' },
+                        combo: { bg: isDarkMode ? 'bg-cyan-900/30' : 'bg-cyan-100', text: 'text-cyan-600' },
+                        multibar: { bg: isDarkMode ? 'bg-teal-900/30' : 'bg-teal-100', text: 'text-teal-600' },
+                        table: { bg: isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100', text: 'text-indigo-600' },
+                        button: { bg: isDarkMode ? 'bg-slate-900/30' : 'bg-slate-100', text: 'text-slate-600' },
+                        iconbutton: { bg: isDarkMode ? 'bg-slate-900/30' : 'bg-slate-100', text: 'text-slate-600' },
+                        input: { bg: isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100', text: 'text-emerald-600' },
+                        text: { bg: isDarkMode ? 'bg-amber-900/30' : 'bg-amber-100', text: 'text-amber-600' },
+                        image: { bg: isDarkMode ? 'bg-rose-900/30' : 'bg-rose-100', text: 'text-rose-600' },
+                        card: { bg: isDarkMode ? 'bg-violet-900/30' : 'bg-violet-100', text: 'text-violet-600' },
+                        navigation: { bg: isDarkMode ? 'bg-sky-900/30' : 'bg-sky-100', text: 'text-sky-600' },
+                        dropdown: { bg: isDarkMode ? 'bg-lime-900/30' : 'bg-lime-100', text: 'text-lime-600' },
+                        checkbox: { bg: isDarkMode ? 'bg-pink-900/30' : 'bg-pink-100', text: 'text-pink-600' },
+                        radio: { bg: isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100', text: 'text-emerald-600' },
+                        progress: { bg: isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100', text: 'text-orange-600' },
+                        alert: { bg: isDarkMode ? 'bg-red-900/30' : 'bg-red-100', text: 'text-red-600' },
+                        avatar: { bg: isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100', text: 'text-blue-600' },
+                        badge: { bg: isDarkMode ? 'bg-green-900/30' : 'bg-green-100', text: 'text-green-600' },
+                        switch: { bg: isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100', text: 'text-purple-600' },
+                        slider: { bg: isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100', text: 'text-indigo-600' },
+                        textarea: { bg: isDarkMode ? 'bg-gray-900/30' : 'bg-gray-100', text: 'text-gray-600' },
+                        separator: { bg: isDarkMode ? 'bg-slate-900/30' : 'bg-slate-100', text: 'text-slate-600' },
+                      };
+                      const palette = colorMap[template.type as string] || { bg: isDarkMode ? 'bg-gray-800' : 'bg-gray-100', text: 'text-gray-600' };
+                      return (
+                        <button
+                          key={`${template.category}-${template.name}`}
+                          onMouseDown={(e) => handleSidebarMouseDown(e, template)}
+                          className={`relative p-2 border-2 border-dashed rounded-lg transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
+                            ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                            : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                            }`}
+                        >
+                          <div className="text-center space-y-2">
+                            <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center ${palette.bg}`}>
+                              <IconComponent className={`w-4 h-4 ${palette.text}`} />
+                            </div>
+                            <div>
+                              <h3 className={`font-medium text-[11px] ${textClass}`}>{template.name}</h3>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className={`font-medium text-[11px] ${textClass}`}>{template.name}</h3>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-            {activeSidebarPanel === 'icons' && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  {getIconTemplates().map((template) => {
-                    const IconComponent = template.icon;
-                    return (
-                      <button
-                        key={`icon-${template.name}`}
-                        onMouseDown={(e) => handleSidebarMouseDown(e, template)}
-                        className={`relative p-2 border-2 border-dashed rounded-lg transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
-                          ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
-                          : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="text-center space-y-2">
-                          <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-pink-900/30' : 'bg-pink-100'}`}>
-                            <IconComponent className={`w-4 h-4 ${isDarkMode ? 'text-pink-400' : 'text-pink-600'}`} />
+              )}
+              {activeSidebarPanel === 'icons' && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {getIconTemplates().map((template) => {
+                      const IconComponent = template.icon;
+                      return (
+                        <button
+                          key={`icon-${template.name}`}
+                          onMouseDown={(e) => handleSidebarMouseDown(e, template)}
+                          className={`relative p-2 border-2 border-dashed rounded-lg transition-colors duration-200 group hover:shadow-lg cursor-grab active:cursor-grabbing ${isDarkMode
+                            ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                            : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                            }`}
+                        >
+                          <div className="text-center space-y-2">
+                            <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-pink-900/30' : 'bg-pink-100'}`}>
+                              <IconComponent className={`w-4 h-4 ${isDarkMode ? 'text-pink-400' : 'text-pink-600'}`} />
+                            </div>
+                            <div>
+                              <h3 className={`font-medium text-[11px] ${textClass}`}>{template.name}</h3>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className={`font-medium text-[11px] ${textClass}`}>{template.name}</h3>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Backdrop when drawer open */}
-      {activeSidebarPanel && (
-        <div
-          className="fixed top-0 left-16 right-0 bottom-0 z-30 bg-black/30"
-          onClick={() => setActiveSidebarPanel(null)}
-        />
-      )}
+        {/* Backdrop when drawer open */}
+        {activeSidebarPanel && (
+          <div
+            className="fixed top-0 left-16 right-0 bottom-0 z-30 bg-black/30"
+            onClick={() => setActiveSidebarPanel(null)}
+          />
+        )}
 
-      {/* Main Area */}
-      <div className="flex-1 flex flex-col" onClick={() => contextMenu.visible && setContextMenu({ visible: false, x: 0, y: 0, chartId: null })}>
-        {/* Header */}
-        <div className={`${headerBgClass} border-b ${borderClass} p-4`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`flex items-center px-2 py-1.5 rounded-lg border ${borderClass} ${isDarkMode ? 'bg-gray-800/60' : 'bg-white'} shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all`}>
-                <input
-                  ref={projectNameInputRef}
-                  type="text"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  disabled={isViewOnly}
-                  className={`min-w-[160px] text-lg font-medium bg-transparent border-none outline-none ${isDarkMode ? 'placeholder-gray-400' : 'placeholder-gray-500'} ${isViewOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  placeholder="Untitled Project"
-                />
-                {!isViewOnly && (
-                  <button
-                    type="button"
-                    onClick={() => projectNameInputRef.current?.focus()}
-                    title="Rename project"
-                    className={` rounded-md transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'}`}
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+        {/* Main Area */}
+        <div className="flex-1 flex flex-col" onClick={() => contextMenu.visible && setContextMenu({ visible: false, x: 0, y: 0, chartId: null })}>
+          {/* Header */}
+          <div className={`${headerBgClass} border-b ${borderClass} p-4`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`flex items-center px-2 py-1.5 rounded-lg border ${borderClass} ${isDarkMode ? 'bg-gray-800/60' : 'bg-white'} shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all`}>
+                  <input
+                    ref={projectNameInputRef}
+                    type="text"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    disabled={isViewOnly}
+                    className={`min-w-[160px] text-lg font-medium bg-transparent border-none outline-none ${isDarkMode ? 'placeholder-gray-400' : 'placeholder-gray-500'} ${isViewOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    placeholder="Untitled Project"
+                  />
+                  {!isViewOnly && (
+                    <button
+                      type="button"
+                      onClick={() => projectNameInputRef.current?.focus()}
+                      title="Rename project"
+                      className={` rounded-md transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'}`}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
                 {isPublicAccess && (
                   <div className={`px-3 py-1 rounded-full text-xs font-medium ${isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
                     {isViewOnly ? '👁️ View Only' : '✏️ Can Edit'}
                   </div>
                 )}
-            </div>
+              </div>
 
-            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 {/* Fixframe AI Button */}
                 <button
                   onClick={() => setShowFixframeAI(true)}
-                  className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-2 ${
-                    isDarkMode
+                  className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-2 ${isDarkMode
                       ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700'
                       : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700'
-                  }`}
+                    }`}
                   title="Open Fixframe AI Assistant"
                 >
                   <Sparkles className="w-3 h-3" />
                   Fixframe AI
                 </button>
-             
 
-              <button
-                onClick={saveWireframe}
-                disabled={isSaving || isViewOnly}
-                className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
-                  isSaving || isViewOnly
-                    ? isDarkMode
-                      ? 'bg-gray-700 text-gray-500'
-                      : 'bg-gray-100 text-gray-400'
-                    : isDarkMode
-                      ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30'
-                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                }`}
-              >
-                <Save className="w-4 h-4" />
-               
-                save
-              </button>
- 
-              {/* Share Button */}
-              <button
-                onClick={() => setShowShareModal(true)}
-                disabled={isViewOnly}
-                className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
-                  isViewOnly
-                    ? isDarkMode
-                      ? 'bg-gray-700 text-gray-500'
-                      : 'bg-gray-100 text-gray-400'
-                    : isDarkMode
-                      ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-                      : 'bg-green-100 text-green-700 hover:bg-green-200'
-                }`}
-                title={isViewOnly ? "Cannot share in view-only mode" : "Share project"}
-              >
-                <Share2 className="w-4 h-4" />
-                Share
-              </button>
 
-              {/* Export Options */}
-              <div className="flex items-center gap-1">
                 <button
-                  onClick={() => {
-                    const totalCharts = pages.reduce((sum, page) => sum + page.charts.length, 0);
-                    if (totalCharts === 0) {
-                      alert('Add at least one chart to export a PDF.');
-                      return;
-                    }
-                    setShowPdfOptions(true);
-                  }}
-                  disabled={isSaving || !pages.some(page => page.charts.length > 0)}
-                  className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
-                    isSaving || !pages.some(page => page.charts.length > 0)
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  onClick={saveWireframe}
+                  disabled={isSaving || isViewOnly}
+                  className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${isSaving || isViewOnly
+                      ? isDarkMode
+                        ? 'bg-gray-700 text-gray-500'
+                        : 'bg-gray-100 text-gray-400'
                       : isDarkMode
-                        ? 'bg-red-900/20 text-red-400 hover:bg-red-900/30'
-                        : 'bg-red-100 text-red-700 hover:bg-red-200'
-                  }`}
-                  title="Export as PDF"
-                >
-                  <Download className="w-4 h-4" />
-                  {isSaving ? 'Exporting...' : 'PDF'}
-                </button>
-               
-               
-              </div>
-
-                {/* Export Options */}
-                <div className="flex items-center gap-1">
-                
-                <button
-                    onClick={() => {
-                      console.log('UltimateWireframeBuilder: Code button clicked, setting showCodeModal to true');
-                      setShowCodeModal(true);
-                    }}
-                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-2 ${
-                      isDarkMode
                         ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30'
                         : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                     }`}
+                >
+                  <Save className="w-4 h-4" />
+
+                  save
+                </button>
+
+                {/* Share Button */}
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  disabled={isViewOnly}
+                  className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${isViewOnly
+                      ? isDarkMode
+                        ? 'bg-gray-700 text-gray-500'
+                        : 'bg-gray-100 text-gray-400'
+                      : isDarkMode
+                        ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                    }`}
+                  title={isViewOnly ? "Cannot share in view-only mode" : "Share project"}
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+
+                {/* Export Options */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      const totalCharts = pages.reduce((sum, page) => sum + page.charts.length, 0);
+                      if (totalCharts === 0) {
+                        alert('Add at least one chart to export a PDF.');
+                        return;
+                      }
+                      setShowPdfOptions(true);
+                    }}
+                    disabled={isSaving || !pages.some(page => page.charts.length > 0)}
+                    className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${isSaving || !pages.some(page => page.charts.length > 0)
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : isDarkMode
+                          ? 'bg-red-900/20 text-red-400 hover:bg-red-900/30'
+                          : 'bg-red-100 text-red-700 hover:bg-red-200'
+                      }`}
+                    title="Export as PDF"
+                  >
+                    <Download className="w-4 h-4" />
+                    {isSaving ? 'Exporting...' : 'PDF'}
+                  </button>
+
+
+                </div>
+
+                {/* Export Options */}
+                <div className="flex items-center gap-1">
+
+                  <button
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCodeModal(true);
+                    }}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-2 ${isDarkMode
+                        ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30'
+                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      }`}
                     title="Generate Dashboard Code"
                   >
                     <Code className="w-3 h-3" />
                     Code
-                </button>
+                  </button>
+                </div>
+
+
+
               </div>
-
-
-
             </div>
           </div>
-        </div>
 
-        {/* Canvas */}
-        <div
-          ref={canvasRef}
-          className={`flex-1 relative overflow-auto ${bgClass} ${draggedChart ? 'select-none' : ''}`}
-          style={{
-            height: 'calc(100vh - 120px)'
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setSelectedChart(null);
-            }
-          }}
-        >
-          {/* Grid Background */}
-          <div 
-            className="absolute inset-0 opacity-30 pointer-events-none"
+          {/* Canvas */}
+          <div
+            ref={canvasRef}
+            className={`flex-1 relative overflow-auto ${bgClass} ${draggedChart ? 'select-none' : ''}`}
             style={{
-              backgroundImage: `
+              height: 'calc(100vh - 120px)'
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedChart(null);
+              }
+            }}
+          >
+            {/* Grid Background */}
+            <div
+              className="absolute inset-0 opacity-30 pointer-events-none"
+              style={{
+                backgroundImage: `
                 linear-gradient(to right, ${isDarkMode ? '#374151' : '#e5e7eb'} 1px, transparent 1px),
                 linear-gradient(to bottom, ${isDarkMode ? '#374151' : '#e5e7eb'} 1px, transparent 1px)
               `,
-              backgroundSize: '24px 24px'
-            }}
-          />
+                backgroundSize: '24px 24px'
+              }}
+            />
 
-          {/* Empty State Placeholder */}
-          {getCurrentPageCharts().length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {/* Empty State Placeholder */}
+            {getCurrentPageCharts().length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className={`text-center p-8 rounded-xl border-2 border-dashed ${isDarkMode
-                  ? 'border-gray-600 bg-gray-800/30' 
+                  ? 'border-gray-600 bg-gray-800/30'
                   : 'border-gray-300 bg-gray-50/50'
-              }`}>
+                  }`}>
                   <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${isDarkMode
-                    ? 'bg-gray-700 text-gray-400' 
+                    ? 'bg-gray-700 text-gray-400'
                     : 'bg-gray-100 text-gray-500'
-                }`}>
-                  <Grid className="w-8 h-8" />
-                </div>
+                    }`}>
+                    <Grid className="w-8 h-8" />
+                  </div>
                   <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
-                }`}>
-                  Start building your wireframe
-                </h3>
+                    }`}>
+                    Start building your wireframe
+                  </h3>
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  Drag charts and components from the sidebar to get started
-                </p>
+                    }`}>
+                    Drag charts and components from the sidebar to get started
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Charts */}
-          {getCurrentPageCharts().map((chart) => {
-            const isBeingDragged = draggedChart === chart.id;
-            const commonProps = {
-              id: chart.id,
-              title: chart.title,
-              data: chart.data,
+            {/* Charts */}
+            {getCurrentPageCharts().map((chart) => {
+              const isBeingDragged = draggedChart === chart.id;
+              const commonProps = {
+                id: chart.id,
+                title: chart.title,
+                data: chart.data,
                 x: 0,
                 y: 0,
-              width: chart.width,
-              height: chart.height,
-              isSelected: selectedChart === chart.id,
-              onSelect: setSelectedChart,
-              onUpdate: updateChart,
-              onDelete: deleteChart,
-              titleColor: chart.titleColor,
-              titleSize: chart.titleSize,
-              titleWeight: chart.titleWeight,
-              isDarkMode
-            };
+                width: chart.width,
+                height: chart.height,
+                isSelected: selectedChart === chart.id,
+                onSelect: setSelectedChart,
+                onUpdate: updateChart,
+                onDelete: deleteChart,
+                titleColor: chart.titleColor,
+                titleSize: chart.titleSize,
+                titleWeight: chart.titleWeight,
+                isDarkMode
+              };
 
-            return (
-              <div
-                key={chart.id}
-                onMouseDown={(e) => handleMouseDown(e, chart.id)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setSelectedChart(chart.id);
-                  setContextMenu({ visible: true, x: e.pageX, y: e.pageY, chartId: chart.id });
-                }}
-                className={`relative transition-opacity duration-150 ${isBeingDragged ? 'opacity-75 z-50' : 'z-10'}`}
-                style={{ 
+              return (
+                <div
+                  key={chart.id}
+                  onMouseDown={(e) => handleMouseDown(e, chart.id)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setSelectedChart(chart.id);
+                    setContextMenu({ visible: true, x: e.pageX, y: e.pageY, chartId: chart.id });
+                  }}
+                  className={`relative transition-opacity duration-150 ${isBeingDragged ? 'opacity-75 z-50' : 'z-10'}`}
+                  style={{
                     position: 'absolute',
                     left: chart.x,
                     top: chart.y,
                     width: chart.width,
                     height: chart.height,
-                  cursor: draggedChart === chart.id ? 'grabbing' : 'grab'
-                }}
-              >
-                {/* Comment Indicator */}
+                    cursor: draggedChart === chart.id ? 'grabbing' : 'grab'
+                  }}
+                >
+                  {/* Comment Indicator */}
                   {chart.comments && chart.comments.length > 0 && (
-                  <div 
-                    className="absolute -top-2 -right-2 z-20"
-                    style={{ pointerEvents: 'none' }}
-                  >
+                    <div
+                      className="absolute -top-2 -right-2 z-20"
+                      style={{ pointerEvents: 'none' }}
+                    >
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${chart.comments && chart.comments.some(c => !c.resolved)
-                        ? 'bg-orange-500 text-white' 
+                        ? 'bg-orange-500 text-white'
                         : 'bg-green-500 text-white'
-                    }`}>
+                        }`}>
                         {chart.comments ? chart.comments.length : 0}
+                      </div>
                     </div>
-                  </div>
-                )}
-                
-                {/* Chart Component */}
-                {chart.type === 'bar' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
-                  <DarkModeBarChart {...commonProps} type="bar" data={chart.data as { name: string; value: number; color: string }[]} />
-                ) : chart.type === 'donut' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
-                  <DarkModeDonutChart {...commonProps} type="donut" data={chart.data as { name: string; value: number; color: string }[]} />
-                ) : chart.type === 'line' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
-                  <RechartsLineChart {...commonProps} type="line" data={chart.data as { name: string; value: number; color: string }[]} />
-                ) : chart.type === 'area' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
-                  <RechartsAreaChart {...commonProps} type="area" data={chart.data as { name: string; value: number; color: string }[]} />
-                ) : chart.type === 'combo' && Array.isArray(chart.data) && chart.data.length > 0 && 'barValue' in chart.data[0] ? (
-                  <ShadcnComboChart {...commonProps} type="combo" data={chart.data as { name: string; barValue: number; lineValue: number; barColor?: string; lineColor?: string }[]} />
-                ) : chart.type === 'multibar' && Array.isArray(chart.data) && chart.data.length > 0 && 'series1' in chart.data[0] ? (
-                  <ShadcnMultiBarChart {...commonProps} data={chart.data as MultiBarChartData[]} />
-                ) : chart.type === 'table' && !Array.isArray(chart.data) ? (
-                  <ShadcnTable {...commonProps} type="table" data={chart.data} />
-                ) : chart.type === 'button' ? (
-                  <WireframeButton {...commonProps} />
-                ) : chart.type === 'iconbutton' ? (
-                  <WireframeIconButton {...commonProps} />
-                ) : chart.type === 'input' ? (
-                  <WireframeInput {...commonProps} />
-                ) : chart.type === 'text' ? (
-                  <WireframeText {...commonProps} />
-                ) : chart.type === 'image' ? (
-                  <WireframeImage {...commonProps} />
-                ) : chart.type === 'card' ? (
-                  <WireframeCard {...commonProps} />
-                ) : chart.type === 'navigation' ? (
-                  <WireframeNavigation {...commonProps} />
-                ) : chart.type === 'dropdown' ? (
-                  <WireframeDropdown {...commonProps} />
-                ) : chart.type === 'checkbox' ? (
-                  <WireframeCheckbox {...commonProps} />
-                ) : chart.type === 'radio' ? (
-                  <WireframeRadioButton {...commonProps} />
-                ) : chart.type === 'progress' ? (
-                  <WireframeProgress {...commonProps} />
-                ) : chart.type === 'alert' ? (
-                  <WireframeAlert {...commonProps} />
-                ) : chart.type === 'avatar' ? (
-                  <WireframeAvatar {...commonProps} />
-                ) : chart.type === 'badge' ? (
-                  <WireframeBadge {...commonProps} />
-                ) : chart.type === 'switch' ? (
-                  <WireframeSwitch {...commonProps} />
-                ) : chart.type === 'slider' ? (
-                  <WireframeSlider {...commonProps} />
-                ) : chart.type === 'textarea' ? (
-                  <WireframeTextarea {...commonProps} />
-                ) : chart.type === 'separator' ? (
-                  <WireframeSeparator {...commonProps} />
-                ) : (
-                  // Fallback for debugging
-                  <div 
-                    className="absolute bg-red-100 border-2 border-red-500 p-4 rounded-lg"
-                    style={{ left: chart.x, top: chart.y, width: chart.width, height: chart.height }}
-                  >
-                    <div className="text-red-600 font-bold">Debug: Chart type: {chart.type}</div>
-                    <div className="text-red-600">Data type: {Array.isArray(chart.data) ? 'Array' : 'Object'}</div>
-                    {Array.isArray(chart.data) && (
-                      <div className="text-red-600">Data length: {chart.data.length}</div>
-                    )}
-                    {Array.isArray(chart.data) && chart.data.length > 0 && (
-                      <div className="text-red-600">First item keys: {Object.keys(chart.data[0]).join(', ')}</div>
-                    )}
-                  </div>
-                )}
+                  )}
+
+                  {/* Chart Component */}
+                  {chart.type === 'bar' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                    <DarkModeBarChart {...commonProps} type="bar" data={chart.data as { name: string; value: number; color: string }[]} />
+                  ) : chart.type === 'donut' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                    <DarkModeDonutChart {...commonProps} type="donut" data={chart.data as { name: string; value: number; color: string }[]} />
+                  ) : chart.type === 'line' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                    <RechartsLineChart {...commonProps} type="line" data={chart.data as { name: string; value: number; color: string }[]} />
+                  ) : chart.type === 'area' && Array.isArray(chart.data) && chart.data.length > 0 && 'value' in chart.data[0] ? (
+                    <RechartsAreaChart {...commonProps} type="area" data={chart.data as { name: string; value: number; color: string }[]} />
+                  ) : chart.type === 'combo' && Array.isArray(chart.data) && chart.data.length > 0 && 'barValue' in chart.data[0] ? (
+                    <ShadcnComboChart {...commonProps} type="combo" data={chart.data as { name: string; barValue: number; lineValue: number; barColor?: string; lineColor?: string }[]} />
+                  ) : chart.type === 'multibar' && Array.isArray(chart.data) && chart.data.length > 0 && 'series1' in chart.data[0] ? (
+                    <ShadcnMultiBarChart {...commonProps} data={chart.data as MultiBarChartData[]} />
+                  ) : chart.type === 'table' && !Array.isArray(chart.data) ? (
+                    <ShadcnTable {...commonProps} type="table" data={chart.data} />
+                  ) : chart.type === 'button' ? (
+                    <WireframeButton {...commonProps} />
+                  ) : chart.type === 'iconbutton' ? (
+                    <WireframeIconButton {...commonProps} />
+                  ) : chart.type === 'input' ? (
+                    <WireframeInput {...commonProps} />
+                  ) : chart.type === 'text' ? (
+                    <WireframeText {...commonProps} />
+                  ) : chart.type === 'image' ? (
+                    <WireframeImage {...commonProps} />
+                  ) : chart.type === 'card' ? (
+                    <WireframeCard {...commonProps} />
+                  ) : chart.type === 'navigation' ? (
+                    <WireframeNavigation {...commonProps} />
+                  ) : chart.type === 'dropdown' ? (
+                    <WireframeDropdown {...commonProps} />
+                  ) : chart.type === 'checkbox' ? (
+                    <WireframeCheckbox {...commonProps} />
+                  ) : chart.type === 'radio' ? (
+                    <WireframeRadioButton {...commonProps} />
+                  ) : chart.type === 'progress' ? (
+                    <WireframeProgress {...commonProps} />
+                  ) : chart.type === 'alert' ? (
+                    <WireframeAlert {...commonProps} />
+                  ) : chart.type === 'avatar' ? (
+                    <WireframeAvatar {...commonProps} />
+                  ) : chart.type === 'badge' ? (
+                    <WireframeBadge {...commonProps} />
+                  ) : chart.type === 'switch' ? (
+                    <WireframeSwitch {...commonProps} />
+                  ) : chart.type === 'slider' ? (
+                    <WireframeSlider {...commonProps} />
+                  ) : chart.type === 'textarea' ? (
+                    <WireframeTextarea {...commonProps} />
+                  ) : chart.type === 'separator' ? (
+                    <WireframeSeparator {...commonProps} />
+                  ) : (
+                    // Fallback for debugging
+                    <div
+                      className="absolute bg-red-100 border-2 border-red-500 p-4 rounded-lg"
+                      style={{ left: chart.x, top: chart.y, width: chart.width, height: chart.height }}
+                    >
+                      <div className="text-red-600 font-bold">Debug: Chart type: {chart.type}</div>
+                      <div className="text-red-600">Data type: {Array.isArray(chart.data) ? 'Array' : 'Object'}</div>
+                      {Array.isArray(chart.data) && (
+                        <div className="text-red-600">Data length: {chart.data.length}</div>
+                      )}
+                      {Array.isArray(chart.data) && chart.data.length > 0 && (
+                        <div className="text-red-600">First item keys: {Object.keys(chart.data[0]).join(', ')}</div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Resize overlay + handles */}
                   {selectedChart === chart.id && !isViewOnly && (
@@ -2217,7 +2215,7 @@ export default function UltimateWireframeBuilder({
                         className="absolute"
                         style={{ left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 31 }}
                       >
-                        {(['nw','ne','se','sw','n','e','s','w'] as const).map(h => {
+                        {(['nw', 'ne', 'se', 'sw', 'n', 'e', 's', 'w'] as const).map(h => {
                           const size = 8;
                           const half = Math.floor(size / 2);
                           return (
@@ -2232,20 +2230,20 @@ export default function UltimateWireframeBuilder({
                                 pointerEvents: 'auto',
                                 left:
                                   h === 'nw' ? `-${half}px` :
-                                  h === 'ne' ? `calc(100% - ${half}px)` :
-                                  h === 'se' ? `calc(100% - ${half}px)` :
-                                  h === 'sw' ? `-${half}px` :
-                                  h === 'e' ? `calc(100% - ${half}px)` :
-                                  h === 'w' ? `-${half}px` :
-                                  `calc(50% - ${half}px)`,
+                                    h === 'ne' ? `calc(100% - ${half}px)` :
+                                      h === 'se' ? `calc(100% - ${half}px)` :
+                                        h === 'sw' ? `-${half}px` :
+                                          h === 'e' ? `calc(100% - ${half}px)` :
+                                            h === 'w' ? `-${half}px` :
+                                              `calc(50% - ${half}px)`,
                                 top:
                                   h === 'nw' ? `-${half}px` :
-                                  h === 'ne' ? `-${half}px` :
-                                  h === 'se' ? `calc(100% - ${half}px)` :
-                                  h === 'sw' ? `calc(100% - ${half}px)` :
-                                  h === 'n' ? `-${half}px` :
-                                  h === 's' ? `calc(100% - ${half}px)` :
-                                  `calc(50% - ${half}px)`,
+                                    h === 'ne' ? `-${half}px` :
+                                      h === 'se' ? `calc(100% - ${half}px)` :
+                                        h === 'sw' ? `calc(100% - ${half}px)` :
+                                          h === 'n' ? `-${half}px` :
+                                            h === 's' ? `calc(100% - ${half}px)` :
+                                              `calc(50% - ${half}px)`,
                                 boxShadow: '0 0 0 2px white'
                               }}
                             />
@@ -2254,240 +2252,235 @@ export default function UltimateWireframeBuilder({
                       </div>
                     </>
                   )}
-              </div>
-            );
-          })}
+                </div>
+              );
+            })}
 
-          {/* Context Menu */}
-          {contextMenu.visible && contextMenu.chartId && (
-            <div
-              className={`fixed z-50 ${isDarkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'} border rounded-md shadow-lg`}
-              style={{ left: contextMenu.x, top: contextMenu.y, minWidth: 160 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
-                onClick={() => {
-                  const id = contextMenu.chartId!;
-                  // duplicate chart
-                  const currentPageCharts = getCurrentPageCharts();
-                  const chart = currentPageCharts.find(c => c.id === id);
-                  if (chart) {
-                    const copy = { ...chart, id: `${chart.id}-copy-${Date.now()}`, x: chart.x + 20, y: chart.y + 20 };
-                    setPages(prev => prev.map(p => p.id === currentPageId ? { ...p, charts: [...p.charts, copy] } : p));
-                  }
-                  setContextMenu({ visible: false, x: 0, y: 0, chartId: null });
-                }}
+            {/* Context Menu */}
+            {contextMenu.visible && contextMenu.chartId && (
+              <div
+                className={`fixed z-50 ${isDarkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'} border rounded-md shadow-lg`}
+                style={{ left: contextMenu.x, top: contextMenu.y, minWidth: 160 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                Duplicate
-              </button>
-              <button
-                className={`w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 ${isDarkMode ? 'hover:bg-red-900/20' : ''}`}
-                onClick={() => {
-                  const id = contextMenu.chartId!;
-                  deleteChart(id);
-                  setContextMenu({ visible: false, x: 0, y: 0, chartId: null });
-                }}
-              >
-                Delete
-              </button>
+                <button
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
+                  onClick={() => {
+                    const id = contextMenu.chartId!;
+                    // duplicate chart
+                    const currentPageCharts = getCurrentPageCharts();
+                    const chart = currentPageCharts.find(c => c.id === id);
+                    if (chart) {
+                      const copy = { ...chart, id: `${chart.id}-copy-${Date.now()}`, x: chart.x + 20, y: chart.y + 20 };
+                      setPages(prev => prev.map(p => p.id === currentPageId ? { ...p, charts: [...p.charts, copy] } : p));
+                    }
+                    setContextMenu({ visible: false, x: 0, y: 0, chartId: null });
+                  }}
+                >
+                  Duplicate
+                </button>
+                <button
+                  className={`w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 ${isDarkMode ? 'hover:bg-red-900/20' : ''}`}
+                  onClick={() => {
+                    const id = contextMenu.chartId!;
+                    deleteChart(id);
+                    setContextMenu({ visible: false, x: 0, y: 0, chartId: null });
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+
+          </div>
+
+          {/* Instructions */}
+          {charts.length > 0 && (
+            <div className={`border-t p-3 ${isDarkMode
+              ? 'bg-blue-900/20 border-blue-700/50'
+              : 'bg-blue-50 border-blue-200'
+              }`}>
+              <div className={`text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-700'
+                }`}>
+                <strong>💡 Tips:</strong> Click charts to customize • Drag to reposition • Ctrl+E for PDF export • Perfect for client presentations
+              </div>
             </div>
           )}
-
         </div>
-        
-        {/* Instructions */}
-        {charts.length > 0 && (
-            <div className={`border-t p-3 ${isDarkMode
-              ? 'bg-blue-900/20 border-blue-700/50' 
-              : 'bg-blue-50 border-blue-200'
-          }`}>
-              <div className={`text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-700'
-            }`}>
-              <strong>💡 Tips:</strong> Click charts to customize • Drag to reposition • Ctrl+E for PDF export • Perfect for client presentations
+
+        {/* Customization Panel */}
+        <div data-customizer className="scrollbar-hide">
+          <EnhancedChartCustomizer
+            selectedChart={selectedChartData}
+            onUpdateChart={updateChart}
+            isDarkMode={isDarkMode}
+            onToggleTheme={toggleTheme}
+            onAddComment={addComment}
+            onResolveComment={resolveComment}
+            onDeleteComment={deleteComment}
+            onAddReply={addReply}
+            onShowFixframeAI={() => setShowFixframeAI(true)}
+            charts={charts}
+            projectName={projectName}
+            showCodeModal={showCodeModal}
+            onShowCodeModal={(v: boolean) => {
+              // ensure immediate state update and prevent focus/drag conflicts
+              setShowCodeModal(v);
+            }}
+          />
+        </div>
+        {/* Share Modal */}
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          projectName={projectName}
+          isDarkMode={isDarkMode}
+          projectId={projectId || undefined}
+        />
+
+        {/* PDF Options Modal */}
+        {showPdfOptions && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Export PDF
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowPdfOptions(false);
+                    setSelectedSlides([]);
+                  }}
+                  className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Choose what you want to export:
+              </p>
+
+              <div className="space-y-3">
+
+                {/* Custom Selection Option */}
+                <div className={`p-4 rounded-lg border-2 ${isDarkMode
+                    ? 'border-purple-500 bg-purple-900/20'
+                    : 'border-purple-500 bg-purple-50'
+                  }`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-5 h-5 rounded flex items-center justify-center ${isDarkMode ? 'bg-purple-600' : 'bg-purple-500'
+                      }`}>
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <div className={`font-medium ${isDarkMode ? 'text-purple-400' : 'text-purple-700'}`}>
+                        Select Specific Slides
+                      </div>
+                      <div className={`text-sm opacity-75 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`}>
+                        Choose which slides to include
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Selection Controls */}
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={selectAllSlides}
+                      className={`px-3 py-1 text-xs rounded transition-colors ${isDarkMode
+                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={clearSlideSelection}
+                      className={`px-3 py-1 text-xs rounded transition-colors ${isDarkMode
+                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                    >
+                      Clear All
+                    </button>
+                  </div>
+
+                  {/* Slides List */}
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {pages.map((page, index) => (
+                      <label
+                        key={page.id}
+                        className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${isDarkMode
+                            ? 'hover:bg-gray-700'
+                            : 'hover:bg-gray-100'
+                          }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedSlides.includes(page.id)}
+                          onChange={() => toggleSlideSelection(page.id)}
+                          className={`w-4 h-4 rounded ${isDarkMode
+                              ? 'text-purple-600 bg-gray-700 border-gray-600'
+                              : 'text-purple-600 bg-white border-gray-300'
+                            }`}
+                        />
+                        <div className="flex-1">
+                          <div className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                            {page.name}
+                          </div>
+                          <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {page.charts.length} element{page.charts.length !== 1 ? 's' : ''}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Export Selected Button */}
+                  <button
+                    onClick={() => {
+                      if (selectedSlides.length === 0) {
+                        alert('Please select at least one slide to export.');
+                        return;
+                      }
+                      setShowPdfOptions(false);
+                      exportAsPDF('selected');
+                    }}
+                    disabled={isSaving || selectedSlides.length === 0}
+                    className={`w-full mt-3 p-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${isDarkMode
+                        ? 'bg-purple-600 text-white hover:bg-purple-700'
+                        : 'bg-purple-500 text-white hover:bg-purple-600'
+                      } ${isSaving || selectedSlides.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Selected ({selectedSlides.length} slide{selectedSlides.length !== 1 ? 's' : ''})
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowPdfOptions(false);
+                    setSelectedSlides([]);
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-colors ${isDarkMode
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Customization Panel */}
-        <div data-customizer className="scrollbar-hide">
-        <EnhancedChartCustomizer
-          selectedChart={selectedChartData}
-          onUpdateChart={updateChart}
-          isDarkMode={isDarkMode}
-          onToggleTheme={toggleTheme}
-          onAddComment={addComment}
-          onResolveComment={resolveComment}
-          onDeleteComment={deleteComment}
-          onAddReply={addReply}
-            onShowFixframeAI={() => setShowFixframeAI(true)}
-            charts={charts}
-            projectName={projectName}
-            showCodeModal={showCodeModal}
-            onShowCodeModal={setShowCodeModal}
-        />
-      </div>
-        {/* Share Modal */}
-      <ShareModal
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-        projectName={projectName}
-        isDarkMode={isDarkMode}
-        projectId={projectId || undefined}
-      />
- 
-      {/* PDF Options Modal */}
-      {showPdfOptions && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto`}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Export PDF
-              </h3>
-              <button
-                onClick={() => {
-                  setShowPdfOptions(false);
-                  setSelectedSlides([]);
-                }}
-                className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
-    </div>
-           
-            <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              Choose what you want to export:
-            </p>
-           
-            <div className="space-y-3">
-             
-              {/* Custom Selection Option */}
-              <div className={`p-4 rounded-lg border-2 ${
-                isDarkMode
-                  ? 'border-purple-500 bg-purple-900/20'
-                  : 'border-purple-500 bg-purple-50'
-              }`}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-5 h-5 rounded flex items-center justify-center ${
-                    isDarkMode ? 'bg-purple-600' : 'bg-purple-500'
-                  }`}>
-                    <Check className="w-3 h-3 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <div className={`font-medium ${isDarkMode ? 'text-purple-400' : 'text-purple-700'}`}>
-                      Select Specific Slides
-                    </div>
-                    <div className={`text-sm opacity-75 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`}>
-                      Choose which slides to include
-                    </div>
-                  </div>
-                </div>
- 
-                {/* Selection Controls */}
-                <div className="flex gap-2 mb-3">
-                  <button
-                    onClick={selectAllSlides}
-                    className={`px-3 py-1 text-xs rounded transition-colors ${
-                      isDarkMode
-                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    Select All
-                  </button>
-                  <button
-                    onClick={clearSlideSelection}
-                    className={`px-3 py-1 text-xs rounded transition-colors ${
-                      isDarkMode
-                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    Clear All
-                  </button>
-                </div>
- 
-                {/* Slides List */}
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {pages.map((page, index) => (
-                    <label
-                      key={page.id}
-                      className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
-                        isDarkMode
-                          ? 'hover:bg-gray-700'
-                          : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedSlides.includes(page.id)}
-                        onChange={() => toggleSlideSelection(page.id)}
-                        className={`w-4 h-4 rounded ${
-                          isDarkMode
-                            ? 'text-purple-600 bg-gray-700 border-gray-600'
-                            : 'text-purple-600 bg-white border-gray-300'
-                        }`}
-                      />
-                      <div className="flex-1">
-                        <div className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                          {page.name}
-                        </div>
-                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {page.charts.length} element{page.charts.length !== 1 ? 's' : ''}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
- 
-                {/* Export Selected Button */}
-                <button
-                  onClick={() => {
-                    if (selectedSlides.length === 0) {
-                      alert('Please select at least one slide to export.');
-                      return;
-                    }
-                    setShowPdfOptions(false);
-                    exportAsPDF('selected');
-                  }}
-                  disabled={isSaving || selectedSlides.length === 0}
-                  className={`w-full mt-3 p-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                    isDarkMode
-                      ? 'bg-purple-600 text-white hover:bg-purple-700'
-                      : 'bg-purple-500 text-white hover:bg-purple-600'
-                  } ${isSaving || selectedSlides.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <Download className="w-4 h-4" />
-                  Export Selected ({selectedSlides.length} slide{selectedSlides.length !== 1 ? 's' : ''})
-                </button>
-              </div>
-            </div>
-           
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowPdfOptions(false);
-                  setSelectedSlides([]);
-                }}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  isDarkMode
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      </div>
-      
       {/* Fixframe AI Modal */}
-      <FixframeAI 
-        show={showFixframeAI} 
-        onClose={() => setShowFixframeAI(false)} 
+      <FixframeAI
+        show={showFixframeAI}
+        onClose={() => setShowFixframeAI(false)}
       />
 
       {/* Comment System */}
@@ -2505,3 +2498,4 @@ export default function UltimateWireframeBuilder({
     </>
   );
 }
+

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { X, Sparkles, ThumbsUp, ThumbsDown, Maximize2, TrendingUp, Users, DollarSign, Activity, Sun, Moon, MoreVertical, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { X, Sparkles, ThumbsUp, ThumbsDown, Maximize2, TrendingUp, Users, DollarSign, Activity, Sun, Moon, MoreVertical, Trash2, Mic, Upload, Pause as PauseIcon, Play, StopCircle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { 
   BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
@@ -44,6 +44,10 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
   const [typingText, setTypingText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showShimmer, setShowShimmer] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [memoryContext, setMemoryContext] = useState<{ lastQuery?: string; filters?: Record<string, string>; timeRange?: string; importanceHints?: string[] }>({});
+  const [brandTheme, setBrandTheme] = useState<{ primary?: string; secondary?: string; accent?: string; font?: string; logoUrl?: string }>({});
+  const [showIframeCode, setShowIframeCode] = useState<string | null>(null);
   
   // New dashboard state
   const [hasDashboard, setHasDashboard] = useState(false);
@@ -52,6 +56,10 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const dashboardModalContentRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const cancelTypingRef = useRef<boolean>(false);
 
   // Clear chat function
   const clearChat = () => {
@@ -66,6 +74,8 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
     setNextGridPosition({ row: 1, col: 1 });
     setShowMenu(false);
   };
+
+  // Resolve API base robustly
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -138,6 +148,152 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
     ]
   };
 
+  // Simple CSV parser (no dependencies)
+  const parseCSV = (text: string): { headers: string[]; rows: Record<string, string>[] } => {
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+    if (lines.length === 0) return { headers: [], rows: [] };
+    const headers = lines[0].split(',').map(h => h.trim());
+    const rows = lines.slice(1).map(line => {
+      const cols = line.split(',');
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => { obj[h] = (cols[i] || '').trim(); });
+      return obj;
+    });
+    return { headers, rows };
+  };
+
+  // Recommend chart type based on detected fields
+  const recommendChartType = (headers: string[]): 'bar chart' | 'line chart' | 'area chart' | 'donut chart' | 'combo chart' | 'multi bar chart' => {
+    const lower = headers.map(h => h.toLowerCase());
+    const hasTime = lower.some(h => ['date', 'month', 'week', 'day', 'time', 'period'].includes(h));
+    const metricCount = lower.filter(h => !['category', 'region', 'name', 'label'].includes(h) && h !== 'date' && h !== 'month').length;
+    if (hasTime && metricCount >= 2) return 'combo chart';
+    if (hasTime) return 'line chart';
+    if (lower.includes('region') || lower.includes('category') || lower.includes('name')) {
+      return metricCount > 1 ? 'multi bar chart' : 'bar chart';
+    }
+    return 'bar chart';
+  };
+
+  // Generate mock dataset and pseudo SQL from NL query
+  const generateDataFromQuery = (query: string): { sql: string; data: any[]; headers: string[]; title: string } => {
+    const q = query.toLowerCase();
+    const timeMatch = q.match(/last\s+(\d+)\s*(months|weeks|days|quarters)/);
+    const periodCount = timeMatch ? parseInt(timeMatch[1], 10) : 6;
+    const periodUnit = timeMatch ? timeMatch[2] : 'months';
+    const byRegion = /by\s+region/.test(q);
+    const byCategory = /by\s+category/.test(q);
+    const metric = (q.match(/(sales|revenue|users|sessions|orders|profit)/) || [])[1] || 'sales';
+
+    const headers = byRegion ? ['month', 'region', 'value'] : byCategory ? ['month', 'category', 'value'] : ['month', 'value'];
+    const regions = ['North', 'South', 'East', 'West'];
+    const categories = ['A', 'B', 'C', 'D'];
+    const now = new Date();
+    const months = Array.from({ length: periodCount }).map((_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (periodCount - 1 - i), 1);
+      return d.toLocaleString('default', { month: 'short' });
+    });
+    const data: any[] = [];
+    if (headers.includes('region')) {
+      months.forEach(m => {
+        regions.forEach(r => {
+          data.push({ month: m, region: r, value: Math.floor(1000 + Math.random() * 5000) });
+        });
+      });
+    } else if (headers.includes('category')) {
+      months.forEach(m => {
+        categories.forEach(c => {
+          data.push({ month: m, category: c, value: Math.floor(200 + Math.random() * 1200) });
+        });
+      });
+    } else {
+      months.forEach(m => data.push({ month: m, value: Math.floor(1000 + Math.random() * 5000) }));
+    }
+
+    const sql = `SELECT ${headers.join(', ')} FROM ${metric}_table WHERE date >= DATEADD(${periodUnit.toUpperCase()}, -${periodCount}, GETDATE())` + (byRegion ? ' GROUP BY month, region' : byCategory ? ' GROUP BY month, category' : '');
+    const title = `${metric.charAt(0).toUpperCase() + metric.slice(1)} ${byRegion ? 'by Region' : byCategory ? 'by Category' : ''} (${periodCount} ${periodUnit})`;
+    return { sql, data, headers, title };
+  };
+
+  // Explain simple insights from a time series dataset
+  const generateInsights = (rows: any[], headers: string[]): string[] => {
+    const insights: string[] = [];
+    const hasMonth = headers.includes('month');
+    const hasValue = headers.includes('value');
+    if (hasMonth && hasValue) {
+      const series = rows.filter(r => r.value != null).map(r => ({ m: r.month, v: Number(r.value) }));
+      if (series.length >= 2) {
+        const first = series[0].v;
+        const last = series[series.length - 1].v;
+        const change = ((last - first) / Math.max(1, first)) * 100;
+        insights.push(`Trend: ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(1)}% from ${series[0].m} to ${series[series.length - 1].m}.`);
+        const maxPoint = series.reduce((a, b) => (b.v > a.v ? b : a));
+        insights.push(`Peak: ${maxPoint.m} had the highest value (${maxPoint.v}).`);
+      }
+    }
+    if (headers.includes('region')) {
+      const byRegion: Record<string, number> = {};
+      rows.forEach(r => { byRegion[r.region] = (byRegion[r.region] || 0) + Number(r.value || 0); });
+      const entries = Object.entries(byRegion);
+      if (entries.length) {
+        const top = entries.sort((a, b) => b[1] - a[1])[0];
+        insights.push(`Top region: ${top[0]} leads with total ${top[1].toLocaleString()}.`);
+      }
+    }
+    return insights;
+  };
+
+  // Export helpers
+  const exportDashboardPNG = async () => {
+    const node = dashboardModalContentRef.current;
+    if (!node) return;
+    const canvas = await html2canvas(node);
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = 'dashboard.png';
+    link.click();
+  };
+
+  const exportDashboardCSV = () => {
+    if (dashboardComponents.length === 0) return;
+    const lines: string[] = [];
+    dashboardComponents.forEach(c => {
+      if (Array.isArray(c.data) && c.data.length > 0) {
+        const headers = Object.keys(c.data[0]);
+        lines.push(`# ${c.title}`);
+        lines.push(headers.join(','));
+        c.data.forEach((row: any) => {
+          lines.push(headers.map(h => row[h]).join(','));
+        });
+        lines.push('');
+      }
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dashboard.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const shareAsLink = () => {
+    const state = { components: dashboardComponents, theme: isDarkMode ? 'dark' : 'light' };
+    const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(state)))));
+    const link = `${window.location.origin}${window.location.pathname}?dashboard=${encoded}`;
+    navigator.clipboard?.writeText(link);
+    alert('Share link copied to clipboard');
+  };
+
+  const generateIframeCode = () => {
+    const state = { components: dashboardComponents, theme: isDarkMode ? 'dark' : 'light' };
+    const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(state)))));
+    const link = `${window.location.origin}${window.location.pathname}?dashboard=${encoded}`;
+    const iframe = `<iframe src="${link}" style="width:100%;height:600px;border:0;" allowfullscreen></iframe>`;
+    setShowIframeCode(iframe);
+  };
+
   // Chart rendering functions
   const renderBarChart = (data: any[]) => (
     <ResponsiveContainer width="100%" height="100%">
@@ -146,7 +302,13 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
         <XAxis dataKey="name" />
         <YAxis />
         <Tooltip />
-        <Bar dataKey="value" fill="#3B82F6" />
+        <Bar dataKey="value">
+          {data.map((entry, index) => {
+            const palette = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#22D3EE', '#84CC16', '#F97316'];
+            const fillColor = entry?.color || palette[index % palette.length];
+            return <Cell key={`cell-bar-${index}`} fill={fillColor} />;
+          })}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
@@ -158,7 +320,7 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
         <XAxis dataKey="name" />
         <YAxis />
         <Tooltip />
-        <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} />
+        <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -187,9 +349,11 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
           paddingAngle={5}
           dataKey="value"
         >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
+          {data.map((entry, index) => {
+            const palette = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#22D3EE', '#84CC16', '#F97316'];
+            const fillColor = entry?.color || palette[index % palette.length];
+            return <Cell key={`cell-${index}`} fill={fillColor} />;
+          })}
         </Pie>
         <Tooltip />
         <Legend />
@@ -220,8 +384,14 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
         <YAxis />
         <Tooltip />
         <Legend />
-        <Bar dataKey="barValue" fill="#3B82F6" />
-        <Line type="monotone" dataKey="lineValue" stroke="#EF4444" strokeWidth={2} />
+        <Bar dataKey="barValue">
+          {data.map((entry, index) => {
+            const palette = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#22D3EE', '#84CC16', '#F97316'];
+            const fillColor = entry?.barColor || palette[index % palette.length];
+            return <Cell key={`cell-combo-bar-${index}`} fill={fillColor} />;
+          })}
+        </Bar>
+        <Line type="monotone" dataKey="lineValue" stroke="#EF4444" strokeWidth={2} dot={{ r: 3 }} />
       </ComposedChart>
     </ResponsiveContainer>
   );
@@ -264,13 +434,25 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
   }, []);
 
   // Typing animation function
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
   const typeText = async (text: string, messageId: string) => {
     setIsTyping(true);
     setTypingText('');
+    cancelTypingRef.current = false;
     
     for (let i = 0; i < text.length; i++) {
+      if (cancelTypingRef.current) {
+        setIsTyping(false);
+        return;
+      }
+      while (isPaused) {
+        // eslint-disable-next-line no-await-in-loop
+        await delay(120);
+      }
       setTypingText(text.slice(0, i + 1));
-      await new Promise(resolve => setTimeout(resolve, 30));
+      // eslint-disable-next-line no-await-in-loop
+      await delay(28);
     }
     
     setIsTyping(false);
@@ -282,6 +464,19 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
         : msg
     ));
   };
+
+  // Auto-grow input and remove scrollbars
+  const adjustTextAreaHeight = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const maxHeight = 120; // px (about ~6 lines)
+    el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px';
+  };
+
+  useEffect(() => {
+    adjustTextAreaHeight();
+  }, [inputText]);
 
   const detectDashboard = (text: string): boolean => {
     const lowerText = text.toLowerCase().trim();
@@ -363,6 +558,26 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
     return detected;
   };
 
+  // Detect follow-up actions like "make this bigger" or filters like "only Europe"
+  const detectFollowUp = (text: string) => {
+    const lower = text.toLowerCase();
+    if (lower.includes('make this bigger') || lower.includes('increase size')) {
+      return { action: 'resize', size: 'bigger' } as const;
+    }
+    if (lower.includes('make this smaller') || lower.includes('decrease size')) {
+      return { action: 'resize', size: 'smaller' } as const;
+    }
+    const filterMatch = lower.match(/only\s+(europe|asia|north|south|east|west)/);
+    if (filterMatch) {
+      return { action: 'filter', value: filterMatch[1] } as const;
+    }
+    const moveMatch = lower.match(/move (this|it) (below|above)/);
+    if (moveMatch) {
+      return { action: 'reorder', direction: moveMatch[2] as 'below' | 'above' } as const;
+    }
+    return null;
+  };
+
   const detectSmallTalk = (text: string): string | null => {
     const lowerText = text.toLowerCase().trim();
     
@@ -391,6 +606,176 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
     return null;
   };
 
+  // Intent classification for FixFrame domain Q&A
+  type Intent = 'definition' | 'features' | 'guidance' | 'detailed' | null;
+  const inferIntent = (text: string): Intent => {
+    const t = text.toLowerCase().trim();
+    if (!t) return null;
+    const isQuestion = /^(what|who|how|why|explain|define|tell me)/.test(t);
+    const definitionHints = /(what is|define|meaning of|explain .*? is)/;
+    const featuresHints = /(features|benefits|what can .* (do|provide)|use cases|advantages)/;
+    const guidanceHints = /(how to|steps|best practices|guide|example|examples)/;
+    const detailedHints = /(explain .* in detail|detailed|comprehensive|step by step|long)/;
+    if (detailedHints.test(t)) return 'detailed';
+    if (definitionHints.test(t) || (isQuestion && /fixframe|wireframe|prototype|low fidelity/.test(t))) return 'definition';
+    if (featuresHints.test(t)) return 'features';
+    if (guidanceHints.test(t)) return 'guidance';
+    // very short queries like "fixframe" or "wireframe" → definition
+    if (t.split(/\s+/).length <= 3 && /(fixframe|wireframe)/.test(t)) return 'definition';
+    return null;
+  };
+
+  const generateIntentAnswer = (intent: Exclude<Intent, null>, text: string): string => {
+    const shortDefFixframe = 'FixFrame is an AI-powered platform that helps create and manage wireframes quickly, streamlining design for teams.';
+    const shortDefWireframe = 'A wireframe is a simple blueprint of a website or app showing structure and layout without visual styling.';
+
+    switch (intent) {
+      case 'definition': {
+        const t = text.toLowerCase();
+        if (t.includes('wireframe')) return shortDefWireframe;
+        if (t.includes('fixframe')) return shortDefFixframe;
+        return `It's a concept within the FixFrame and wireframing workflow. Tell me which term you'd like defined (e.g., "FixFrame", "wireframe").`;
+      }
+      case 'features': {
+        return [
+          '1. AI-powered wireframe generation',
+          '2. Ready-to-use templates',
+          '3. Team collaboration features',
+          '4. Faster design-to-development workflow'
+        ].join('\n');
+      }
+      case 'guidance': {
+        return [
+          'Step 1: Start with a basic wireframe to outline structure',
+          'Step 2: Add content blocks and define user flow',
+          'Step 3: Share with team members for feedback',
+          'Step 4: Convert into high-fidelity design for developers'
+        ].join('\n');
+      }
+      case 'detailed': {
+        return [
+          '1) Define the goal: clarify the page or flow objective',
+          '2) Layout structure: place headers, nav, sections, and CTAs',
+          '3) Annotate interactions: note states, errors, and transitions',
+          '4) Iterate with feedback: review with stakeholders and refine',
+          '5) Handoff: translate into high-fidelity design and components'
+        ].join('\n');
+      }
+    }
+  };
+
+  // Detect whether user wants to append to the existing preview
+  const wantsAppendToExisting = (text: string): boolean => {
+    const t = text.toLowerCase();
+    const hasExistingWord = /(existing|this|current|previous|previos)/.test(t);
+    const hasPreviewRef = /(preview|dashboard|board|one|it)/.test(t);
+    return hasExistingWord && hasPreviewRef;
+  };
+
+  // Fuzzy helpers for chart type tokens
+  const levenshtein = (a: string, b: string): number => {
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(
+          dp[i - 1][j] + 1,
+          dp[i][j - 1] + 1,
+          dp[i - 1][j - 1] + cost
+        );
+      }
+    }
+    return dp[m][n];
+  };
+
+  const normalizeTypeWord = (raw: string): string | null => {
+    const token = raw.replace(/\s+/g, ' ').replace(/-+/g, '-').trim();
+    // Canonical labels
+    const canonical: Record<string, string> = {
+      'bar': 'bar chart',
+      'line': 'line chart',
+      'area': 'area chart',
+      'donut': 'donut chart',
+      'multi bar': 'multi bar chart',
+      'multi-bar': 'multi bar chart',
+      'multibar': 'multi bar chart',
+      'multi bars': 'multi bar chart',
+      'combo': 'combo chart',
+      'table': 'table'
+    };
+    const synonyms: Record<string, string[]> = {
+      'donut': ['donut', 'doughnut', 'dunot', 'donut chart', 'doughnut chart'],
+      'multi bar': ['multi bar', 'multi-bar', 'multibar', 'multi bars', 'multi bar chart'],
+      'bar': ['bar', 'bars', 'bar chart'],
+      'line': ['line', 'line chart'],
+      'area': ['area', 'area chart'],
+      'combo': ['combo', 'combination', 'combo chart'],
+      'table': ['table', 'tables', 'tabel', 'tabels', 'teble', 'tebles']
+    };
+    // Direct hit
+    if (canonical[token]) return canonical[token];
+    // Synonym hit
+    for (const [key, arr] of Object.entries(synonyms)) {
+      if (arr.includes(token)) return canonical[key];
+    }
+    // Fuzzy by distance against flat list
+    const candidates: Array<{ key: string; label: string; variants: string[] }> = [
+      { key: 'bar', label: canonical['bar'], variants: synonyms['bar'] },
+      { key: 'line', label: canonical['line'], variants: synonyms['line'] },
+      { key: 'area', label: canonical['area'], variants: synonyms['area'] },
+      { key: 'donut', label: canonical['donut'], variants: synonyms['donut'] },
+      { key: 'multi bar', label: canonical['multi bar'], variants: synonyms['multi bar'] },
+      { key: 'combo', label: canonical['combo'], variants: synonyms['combo'] },
+      { key: 'table', label: canonical['table'], variants: synonyms['table'] },
+    ];
+    let best: { label: string; dist: number } | null = null;
+    const norm = token.replace(/\s+/g, '').toLowerCase();
+    for (const c of candidates) {
+      for (const v of c.variants) {
+        const vn = v.replace(/\s+/g, '').toLowerCase();
+        const d = levenshtein(norm, vn);
+        if (best == null || d < best.dist) {
+          best = { label: c.label, dist: d };
+        }
+      }
+    }
+    // Accept small distance threshold
+    if (best && best.dist <= 2) return best.label;
+    return null;
+  };
+
+  // Helper: create a chart component by type label
+  const createComponentByType = (typeLabel: string, index: number, fileNameHint?: string): DashboardComponent => {
+    const colSpan = typeLabel === 'table' ? 12 : typeLabel === 'donut chart' ? 4 : 6;
+    const mockKeyMap: Record<string, keyof typeof mockData> = {
+      'bar chart': 'bar',
+      'line chart': 'line',
+      'area chart': 'area',
+      'donut chart': 'donut',
+      'multi bar chart': 'multiBar',
+      'combo chart': 'combo',
+    };
+    const key = mockKeyMap[typeLabel as keyof typeof mockKeyMap] || 'bar';
+    const title = fileNameHint ? `Uploaded ${fileNameHint}` : typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1);
+    let data = (mockData as any)[key];
+    // Ensure donut gets a colorful palette if missing colors
+    if (key === 'donut') {
+      const palette = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#22D3EE', '#84CC16', '#F97316'];
+      data = data.map((d: any, i: number) => ({ ...d, color: d.color || palette[i % palette.length] }));
+    }
+    return {
+      id: `comp-${Date.now()}-${index}`,
+      type: typeLabel,
+      title,
+      colSpan,
+      rowSpan: 1,
+      data
+    };
+  };
+
   // Helper function to get next grid position
   const getNextGridPosition = (colSpan: number) => {
     let { row, col } = nextGridPosition;
@@ -412,60 +797,110 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
   // Helper function to render a dashboard component
   const renderDashboardComponent = (component: DashboardComponent) => {
     const { type, title, data } = component;
+    const headers = Array.isArray(data) && data.length ? Object.keys(data[0]) : [];
+    const insights = Array.isArray(data) ? generateInsights(data, headers) : [];
     
     switch (type) {
       case 'bar chart':
         return (
-          <div className={`rounded-lg shadow-sm border p-4 h-full ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
-            <div className="h-64">
+          <div className={`rounded-lg shadow-sm border p-4 h-full min-h-[22rem] flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
+              <button className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`} title="Explain this chart" onClick={() => alert((insights.join('\n') || 'No significant insights detected.'))}>Explain</button>
+            </div>
+            <div className="flex-1 min-h-[16rem]">
               {renderBarChart(data || mockData.bar)}
             </div>
+            {insights.length > 0 && (
+              <ul className={`mt-2 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {insights.map((i, idx) => (<li key={idx}>• {i}</li>))}
+              </ul>
+            )}
           </div>
         );
       case 'line chart':
         return (
-          <div className={`rounded-lg shadow-sm border p-4 h-full ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
-            <div className="h-64">
+          <div className={`rounded-lg shadow-sm border p-4 h-full min-h-[22rem] flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
+              <button className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`} title="Explain this chart" onClick={() => alert((insights.join('\n') || 'No significant insights detected.'))}>Explain</button>
+            </div>
+            <div className="flex-1 min-h-[16rem]">
               {renderLineChart(data || mockData.line)}
             </div>
+            {insights.length > 0 && (
+              <ul className={`mt-2 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {insights.map((i, idx) => (<li key={idx}>• {i}</li>))}
+              </ul>
+            )}
           </div>
         );
       case 'area chart':
         return (
-          <div className={`rounded-lg shadow-sm border p-4 h-full ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
-            <div className="h-64">
+          <div className={`rounded-lg shadow-sm border p-4 h-full min-h-[22rem] flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
+              <button className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`} title="Explain this chart" onClick={() => alert((insights.join('\n') || 'No significant insights detected.'))}>Explain</button>
+            </div>
+            <div className="flex-1 min-h-[16rem]">
               {renderAreaChart(data || mockData.area)}
             </div>
+            {insights.length > 0 && (
+              <ul className={`mt-2 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {insights.map((i, idx) => (<li key={idx}>• {i}</li>))}
+              </ul>
+            )}
           </div>
         );
       case 'donut chart':
         return (
-          <div className={`rounded-lg shadow-sm border p-4 h-full ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
-            <div className="h-64">
+          <div className={`rounded-lg shadow-sm border p-4 h-full min-h-[22rem] flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
+              <button className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`} title="Explain this chart" onClick={() => alert((insights.join('\n') || 'No significant insights detected.'))}>Explain</button>
+            </div>
+            <div className="flex-1 min-h-[16rem]">
               {renderDonutChart(data || mockData.donut)}
             </div>
+            {insights.length > 0 && (
+              <ul className={`mt-2 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {insights.map((i, idx) => (<li key={idx}>• {i}</li>))}
+              </ul>
+            )}
           </div>
         );
       case 'multi bar chart':
         return (
-          <div className={`rounded-lg shadow-sm border p-4 h-full ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
-            <div className="h-64">
+          <div className={`rounded-lg shadow-sm border p-4 h-full min-h-[22rem] flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
+              <button className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`} title="Explain this chart" onClick={() => alert((insights.join('\n') || 'No significant insights detected.'))}>Explain</button>
+            </div>
+            <div className="flex-1 min-h-[16rem]">
               {renderMultiBarChart(data || mockData.multiBar)}
             </div>
+            {insights.length > 0 && (
+              <ul className={`mt-2 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {insights.map((i, idx) => (<li key={idx}>• {i}</li>))}
+              </ul>
+            )}
           </div>
         );
       case 'combo chart':
         return (
-          <div className={`rounded-lg shadow-sm border p-4 h-full ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
-            <div className="h-64">
+          <div className={`rounded-lg shadow-sm border p-4 h-full min-h-[22rem] flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
+              <button className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`} title="Explain this chart" onClick={() => alert((insights.join('\n') || 'No significant insights detected.'))}>Explain</button>
+            </div>
+            <div className="flex-1 min-h-[16rem]">
               {renderComboChart(data || mockData.combo)}
             </div>
+            {insights.length > 0 && (
+              <ul className={`mt-2 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {insights.map((i, idx) => (<li key={idx}>• {i}</li>))}
+              </ul>
+            )}
           </div>
         );
       case 'table':
@@ -585,10 +1020,253 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
       await typeText(smallTalkResponse, aiMessageId);
       return;
     }
+    // Detect specific typed charts: e.g., "create 2 donut chart", "add three line charts"
+    {
+      const lower = userInput.toLowerCase();
+      const wordToNum: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+      const types = ['bar chart', 'line chart', 'area chart', 'donut chart', 'multi bar chart', 'combo chart'];
+      // Build a regex group for types (handle optional trailing 's' and common typos)
+      const typeGroup = '(bar|line|area|donut|doughnut|dunot|multi\\s*[- ]?bar|multibar|multi\\s*bars|combo|teble|table|tabel|tebles?)\\s+charts?';
+      // Single-match handler removed to allow multi-group handler below to process the entire sentence
+    }
+
+    // Detect multiple typed groups across sentence: e.g., "one combo chart and 2 donut chart"
+    {
+      const lower = userInput.toLowerCase();
+      const wordToNum: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+      const typeGroup = '(bar|line|area|donut|doughnut|dunot|multi\\s*[- ]?bar|multibar|multi\\s*bars|combo)\\s+charts?';
+      const canonical: Record<string, string> = {
+        'bar': 'bar chart',
+        'line': 'line chart',
+        'area': 'area chart',
+        'donut': 'donut chart',
+        'doughnut': 'donut chart',
+        'dunot': 'donut chart',
+        'multi bar': 'multi bar chart',
+        'multi-bar': 'multi bar chart',
+        'multibar': 'multi bar chart',
+        'multi bars': 'multi bar chart',
+        'combo': 'combo chart'
+      };
+      const re = new RegExp(`\\b(?:add\\s*)?(\\d+|one|two|three|four|five|six)\\s+${typeGroup}\\b`, 'g');
+      let match: RegExpExecArray | null;
+      const components: DashboardComponent[] = [];
+      while ((match = re.exec(lower)) !== null) {
+        const countTok = match[1];
+        const typeWord = match[2];
+        const parsed = isNaN(Number(countTok)) ? (wordToNum[countTok] || 1) : Number(countTok);
+        const count = Math.max(1, Math.min(6, parsed));
+        const normalizedKey = typeWord.replace(/\s+/g, ' ').replace(/-+/g, '-');
+        const normalizedType = normalizeTypeWord(normalizedKey) || canonical[normalizedKey] || 'bar chart';
+        for (let i = 0; i < count; i++) {
+          components.push(createComponentByType(normalizedType, components.length));
+        }
+      }
+      // Also parse tables with typos globally
+      const reTable = /\b(\d+|one|two|three|four|five|six)\s+(tables?|tabels?|tabel|tebale|teble|tebles?)\b/g;
+      let tm: RegExpExecArray | null;
+      while ((tm = reTable.exec(lower)) !== null) {
+        const ctok = tm[1];
+        const parsed = isNaN(Number(ctok)) ? (wordToNum[ctok] || 1) : Number(ctok);
+        const tcount = Math.max(1, Math.min(6, parsed));
+        for (let i = 0; i < tcount; i++) {
+          components.push(createComponentByType('table', components.length));
+        }
+      }
+      if (components.length > 0) {
+        const addToExisting = wantsAppendToExisting(userInput);
+        if (hasDashboard && addToExisting) {
+          setDashboardComponents(prev => [...prev, ...components]);
+        } else {
+          setHasDashboard(true);
+          setDashboardComponents(components);
+          setNextGridPosition({ row: 1, col: 1 });
+        }
+        setGeneratedLayout(renderDashboard());
+        const countByType: Record<string, number> = {};
+        components.forEach(c => { countByType[c.type] = (countByType[c.type] || 0) + 1; });
+        const parts = Object.entries(countByType).map(([t, n]) => `${n} ${t}${n > 1 ? 's' : ''}`);
+        const summary = parts.join(' and ');
+        const reply = addToExisting ? `Added ${summary} to your dashboard.` : `Created a dashboard with ${summary}.`;
+        const aiMessageId = currentMessageId.toString();
+        setChatMessages(prev => {
+          const filtered = prev.filter(msg => !msg.showLoader);
+          const typingMessage = {
+            id: aiMessageId,
+            type: 'ai' as const,
+            content: reply,
+            timestamp: new Date(),
+            showTyping: true,
+            showPreview: true
+          };
+          return [...filtered, typingMessage];
+        });
+        setCurrentMessageId(prev => prev + 1);
+        await typeText(reply, aiMessageId);
+        return;
+      }
+    }
+
+    // Detect mixed requests like "three charts and 1 table" (supports number words up to six)
+    const lowerCmd = userInput.toLowerCase();
+    const wordToNum: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+    const numFromToken = (tok?: string): number => {
+      if (!tok) return 0;
+      return isNaN(Number(tok)) ? (wordToNum[tok] || 0) : Number(tok);
+    };
+    const chartTok = lowerCmd.match(/\b(\d+|one|two|three|four|five|six)\s+charts?\b/);
+    const tableTok = lowerCmd.match(/\b(\d+|one|two|three|four|five|six)\s+(tables?|tabels?|tabel|tebale|teble|tebles?)\b/);
+    const chartsRequested = Math.max(0, Math.min(6, numFromToken(chartTok?.[1])));
+    const tablesRequested = Math.max(0, Math.min(6, numFromToken(tableTok?.[1])));
+    const addToExisting = /\badd\b/.test(lowerCmd);
+    if (chartsRequested > 0 || tablesRequested > 0) {
+      const pool = ['bar chart', 'line chart', 'area chart', 'donut chart', 'multi bar chart', 'combo chart'];
+      const chartComponents: DashboardComponent[] = Array.from({ length: chartsRequested }).map((_, i) => {
+        const t = pool[Math.floor(Math.random() * pool.length)];
+        return createComponentByType(t, i);
+      });
+      const tableComponents: DashboardComponent[] = Array.from({ length: tablesRequested }).map((_, i) => createComponentByType('table', chartsRequested + i));
+      const newComponents = [...chartComponents, ...tableComponents];
+
+      if (hasDashboard && addToExisting) {
+        setDashboardComponents(prev => [...prev, ...newComponents]);
+      } else {
+        setHasDashboard(true);
+        setDashboardComponents(newComponents);
+        setNextGridPosition({ row: 1, col: 1 });
+      }
+
+      setGeneratedLayout(renderDashboard());
+
+      const parts: string[] = [];
+      if (chartsRequested > 0) parts.push(`${chartsRequested} chart${chartsRequested > 1 ? 's' : ''}`);
+      if (tablesRequested > 0) parts.push(`${tablesRequested} table${tablesRequested > 1 ? 's' : ''}`);
+      const summary = parts.join(' and ');
+      const reply = addToExisting
+        ? `Added ${summary} to your dashboard.`
+        : `Created a dashboard with ${summary}.`;
+
+      const aiMessageId = currentMessageId.toString();
+      setChatMessages(prev => {
+        const filtered = prev.filter(msg => !msg.showLoader);
+        const typingMessage = {
+          id: aiMessageId,
+          type: 'ai' as const,
+          content: reply,
+          timestamp: new Date(),
+          showTyping: true,
+          showPreview: true
+        };
+        return [...filtered, typingMessage];
+      });
+      setCurrentMessageId(prev => prev + 1);
+      await typeText(reply, aiMessageId);
+      return;
+    }
+    // Intent-based Q&A for FixFrame domain (only if not an analytics/dashboard command)
+    const intent = inferIntent(userInput);
+    const looksLikeAnalytics = /(show|plot|graph|visualize|compare|trend)/i.test(userInput) || /(sales|revenue|users|orders|profit)/i.test(userInput);
+    if (!looksLikeAnalytics && intent) {
+      const answer = generateIntentAnswer(intent, userInput);
+      const aiMessageId = currentMessageId.toString();
+      setChatMessages(prev => {
+        const filtered = prev.filter(msg => !msg.showLoader);
+        const typingMessage = {
+          id: aiMessageId,
+          type: 'ai' as const,
+          content: answer,
+          timestamp: new Date(),
+          showTyping: true
+        };
+        return [...filtered, typingMessage];
+      });
+      setCurrentMessageId(prev => prev + 1);
+      await typeText(answer, aiMessageId);
+      return;
+    }
     
+    // Skip external backend; use local logic only
+
     // Check if user wants to create a dashboard
     const wantsDashboard = detectDashboard(userInput);
     const detected = detectComponents(userInput);
+    const followUp = detectFollowUp(userInput);
+
+    // Apply follow-ups to existing dashboard
+    if (hasDashboard && followUp) {
+      if (followUp.action === 'resize' && dashboardComponents.length) {
+        setDashboardComponents(prev => prev.map((c, idx) => idx === prev.length - 1 ? { ...c, colSpan: Math.max(3, Math.min(12, c.colSpan + (followUp.size === 'bigger' ? 3 : -3))) } : c));
+      } else if (followUp.action === 'reorder' && dashboardComponents.length >= 2) {
+        setDashboardComponents(prev => {
+          const arr = [...prev];
+          const last = arr.pop()!;
+          if (followUp.direction === 'above') arr.unshift(last); else arr.push(last);
+          return arr;
+        });
+      } else if (followUp.action === 'filter' && dashboardComponents.length) {
+        const v = followUp.value;
+        setDashboardComponents(prev => prev.map(c => {
+          if (Array.isArray(c.data)) {
+            if (c.data[0] && 'region' in c.data[0]) {
+              return { ...c, data: c.data.filter((r: any) => String(r.region).toLowerCase().includes(v)) };
+            }
+          }
+          return c;
+        }));
+      }
+      // Remove loader and reply
+      const aiMessageId = currentMessageId.toString();
+      setChatMessages(prev => {
+        const filtered = prev.filter(msg => !msg.showLoader);
+        const typingMessage = {
+          id: aiMessageId,
+          type: 'ai' as const,
+          content: 'Done. Updated your dashboard.',
+          timestamp: new Date(),
+          showTyping: true,
+          showPreview: true
+        };
+        return [...filtered, typingMessage];
+      });
+      setCurrentMessageId(prev => prev + 1);
+      await typeText('Done. Updated your dashboard.', aiMessageId);
+      return;
+    }
+
+    // Natural language → data (mock JSON + pseudo SQL)
+    if (looksLikeAnalytics) {
+      const { sql, data, headers, title } = generateDataFromQuery(userInput);
+      const recommended = recommendChartType(headers);
+      setHasDashboard(true);
+      setNextGridPosition({ row: 1, col: 1 });
+      setDashboardComponents([{
+        id: `comp-${Date.now()}`,
+        type: recommended,
+        title: title,
+        colSpan: recommended === 'donut chart' ? 4 : 8,
+        rowSpan: 1,
+        data
+      }]);
+      setGeneratedLayout(renderDashboard());
+      setMemoryContext(prev => ({ ...prev, lastQuery: userInput }));
+      const response = `Here is a ${recommended} for: ${title}.\nSQL (mock): ${sql}`;
+      const aiMessageId = currentMessageId.toString();
+      setChatMessages(prev => {
+        const filtered = prev.filter(msg => !msg.showLoader);
+        const typingMessage = {
+          id: aiMessageId,
+          type: 'ai' as const,
+          content: response,
+          timestamp: new Date(),
+          showTyping: true,
+          showPreview: true
+        };
+        return [...filtered, typingMessage];
+      });
+      setCurrentMessageId(prev => prev + 1);
+      await typeText(response, aiMessageId);
+      return;
+    }
     
     if (wantsDashboard && detected.length > 0) {
       // Create new dashboard
@@ -635,44 +1313,59 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
     }
     
     if (hasDashboard && detected.length > 0) {
-      // Add components to existing dashboard
-      const newComponents: DashboardComponent[] = detected.map((comp, index) => {
-        const position = getNextGridPosition(comp === 'table' ? 12 : comp === 'donut chart' ? 4 : 6);
-        return {
-          id: `comp-${Date.now()}-${index}`,
-          type: comp,
-          title: comp.charAt(0).toUpperCase() + comp.slice(1),
-          colSpan: comp === 'table' ? 12 : comp === 'donut chart' ? 4 : 6,
-          rowSpan: 1,
-          data: mockData[comp.replace(' ', '') as keyof typeof mockData] || mockData.bar
-        };
-      });
-      
-      setDashboardComponents(prev => [...prev, ...newComponents]);
-      
-      // Update the dashboard layout for preview
-      const dashboardLayout = renderDashboard();
-      setGeneratedLayout(dashboardLayout);
-      
-      // Remove loader and add success message with preview
-      const successText = `Great! I've added ${detected.length} new component${detected.length > 1 ? 's' : ''} to your dashboard.`;
-      const aiMessageId = currentMessageId.toString();
-      setChatMessages(prev => {
-        const filtered = prev.filter(msg => !msg.showLoader);
-        const typingMessage = {
-          id: aiMessageId,
-          type: 'ai' as const,
-          content: successText,
-          timestamp: new Date(),
-          showTyping: true,
-          showPreview: true
-        };
-        return [...filtered, typingMessage];
-      });
-      setCurrentMessageId(prev => prev + 1);
-      
-      // Start typing animation
-      await typeText(successText, aiMessageId);
+      const wantsAppend = /\b(add|append)\b/i.test(userInput);
+      const newComponents: DashboardComponent[] = detected.map((comp, index) => ({
+        id: `comp-${Date.now()}-${index}`,
+        type: comp,
+        title: comp.charAt(0).toUpperCase() + comp.slice(1),
+        colSpan: comp === 'table' ? 12 : comp === 'donut chart' ? 4 : 6,
+        rowSpan: 1,
+        data: mockData[comp.replace(' ', '') as keyof typeof mockData] || mockData.bar
+      }));
+
+      if (wantsAppend) {
+        setDashboardComponents(prev => [...prev, ...newComponents]);
+        const dashboardLayout = renderDashboard();
+        setGeneratedLayout(dashboardLayout);
+        const successText = `Great! I've added ${detected.length} new component${detected.length > 1 ? 's' : ''} to your dashboard.`;
+        const aiMessageId = currentMessageId.toString();
+        setChatMessages(prev => {
+          const filtered = prev.filter(msg => !msg.showLoader);
+          const typingMessage = {
+            id: aiMessageId,
+            type: 'ai' as const,
+            content: successText,
+            timestamp: new Date(),
+            showTyping: true,
+            showPreview: true
+          };
+          return [...filtered, typingMessage];
+        });
+        setCurrentMessageId(prev => prev + 1);
+        await typeText(successText, aiMessageId);
+      } else {
+        // Create a new preview instead of adding
+        setHasDashboard(true);
+        setDashboardComponents(newComponents);
+        setNextGridPosition({ row: 1, col: 1 });
+        setGeneratedLayout(renderDashboard());
+        const text = `Created a new dashboard with ${detected.length} component${detected.length > 1 ? 's' : ''}.`;
+        const aiMessageId = currentMessageId.toString();
+        setChatMessages(prev => {
+          const filtered = prev.filter(msg => !msg.showLoader);
+          const typingMessage = {
+            id: aiMessageId,
+            type: 'ai' as const,
+            content: text,
+            timestamp: new Date(),
+            showTyping: true,
+            showPreview: true
+          };
+          return [...filtered, typingMessage];
+        });
+        setCurrentMessageId(prev => prev + 1);
+        await typeText(text, aiMessageId);
+      }
       return;
     }
     
@@ -706,7 +1399,7 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
     if (!hasDashboard || dashboardComponents.length === 0) return null;
 
     return (
-      <div className={`min-h-screen p-6 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+      <div ref={dashboardModalContentRef} className={`min-h-screen p-6 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className={`rounded-lg shadow-sm border p-6 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
@@ -775,11 +1468,15 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
         </div>
 
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-12 gap-6">
-          {dashboardComponents.map((component, index) => (
-            <div 
+        <div className="grid grid-cols-12 auto-rows-fr gap-6 items-stretch">
+          {dashboardComponents.map((component) => (
+            <div
               key={component.id}
-              className={`col-span-${component.colSpan} row-span-${component.rowSpan}`}
+              style={{
+                gridColumn: `span ${component.colSpan} / span ${component.colSpan}`,
+                gridRow: `span ${component.rowSpan} / span ${component.rowSpan}`
+              }}
+              className="h-full"
             >
               {renderDashboardComponent(component)}
             </div>
@@ -900,6 +1597,11 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
               <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard Preview</h2>
             </div>
             <div className="flex items-center gap-2">
+              {/* Export / Share */}
+              <button onClick={exportDashboardPNG} className={`px-3 py-1.5 text-xs rounded ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`}>Export PNG</button>
+              <button onClick={exportDashboardCSV} className={`px-3 py-1.5 text-xs rounded ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`}>Export CSV</button>
+              {/* Share Link option removed */}
+              {/* iFrame option removed */}
               {/* 3-Dot Menu */}
               <div className="relative" data-menu="true">
                 <button
@@ -959,6 +1661,7 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
           <div className="p-0">
             {hasDashboard ? renderDashboard() : generatedLayout}
           </div>
+          {/* iFrame embed removed */}
         </div>
       </div>
     );
@@ -1044,8 +1747,38 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
 
           {/* Input Area */}
           <div className={`p-4 border-t rounded-b-lg ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-100 bg-gradient-to-r from-gray-50 to-white'}`}>
-            <div className={`relative flex items-end space-x-3 rounded-2xl shadow-lg border p-3 hover:shadow-xl transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+            <div
+              className={`relative flex items-end space-x-3 rounded-2xl shadow-lg border p-3 hover:shadow-xl transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}
+              onDragOver={(e) => { e.preventDefault(); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const text = String(reader.result || '');
+                    const parsed = parseCSV(text);
+                    if (parsed.headers.length && parsed.rows.length) {
+                      const rec = recommendChartType(parsed.headers);
+                      setHasDashboard(true);
+                      setDashboardComponents([{
+                        id: `comp-${Date.now()}`,
+                        type: rec,
+                        title: `Uploaded ${file.name}`,
+                        colSpan: rec === 'donut chart' ? 4 : 8,
+                        rowSpan: 1,
+                        data: parsed.rows
+                      }]);
+                      setGeneratedLayout(renderDashboard());
+                      setChatMessages(prev => [...prev, { id: (Date.now()).toString(), type: 'ai', content: `Parsed ${file.name}. Recommended a ${rec}.`, timestamp: new Date() }]);
+                    }
+                  };
+                  reader.readAsText(file);
+                }
+              }}
+            >
               <textarea
+                ref={inputRef}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={(e) => {
@@ -1055,16 +1788,73 @@ export default function FixframeAI({ show, onClose }: FixframeAIProps) {
                   }
                 }}
                 placeholder="Ask me to create a dashboard or add components..."
-                className={`w-full px-4 py-3 border-0 bg-transparent resize-none text-sm focus:outline-none focus:ring-0 ${isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-400'}`}
-                rows={1}
+                 className={`w-full px-4 py-3 border-0 bg-transparent resize-none overflow-hidden text-sm focus:outline-none focus:ring-0 ${isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-400'}`}
+                 rows={1}
               />
+              <input ref={fileInputRef} type="file" accept=".csv,.txt" className="hidden" onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const text = String(reader.result || '');
+                  const parsed = parseCSV(text);
+                  if (parsed.headers.length && parsed.rows.length) {
+                    const rec = recommendChartType(parsed.headers);
+                    setHasDashboard(true);
+                    setDashboardComponents([{
+                      id: `comp-${Date.now()}`,
+                      type: rec,
+                      title: `Uploaded ${file.name}`,
+                      colSpan: rec === 'donut chart' ? 4 : 8,
+                      rowSpan: 1,
+                      data: parsed.rows
+                    }]);
+                    setGeneratedLayout(renderDashboard());
+                    setChatMessages(prev => [...prev, { id: (Date.now()).toString(), type: 'ai', content: `Parsed ${file.name}. Recommended a ${rec}.`, timestamp: new Date() }]);
+                  }
+                };
+                reader.readAsText(file);
+              }} />
+              {/* Upload button removed as requested; drag-and-drop still supported */}
               <button
-                onClick={handleGenerate}
-                disabled={!inputText.trim()}
-                className="px-6 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold shadow-lg hover:shadow-xl hover:scale-105 transform"
+                onClick={() => {
+                  const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                  if (!SR) {
+                    alert('Speech recognition not supported in this browser.');
+                    return;
+                  }
+                  const rec = new SR();
+                  rec.lang = 'en-US';
+                  rec.onresult = (ev: any) => {
+                    const transcript = ev.results[0][0].transcript;
+                    setInputText(transcript);
+                  };
+                  rec.start();
+                }}
+                className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${isDarkMode ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors`}
+                title="Voice input"
               >
-                <Sparkles className="w-4 h-4" />
-                Send
+                <Mic className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => {
+                  if (isTyping) {
+                    // Stop current response
+                    setIsPaused(false);
+                    setIsTyping(false);
+                    cancelTypingRef.current = true;
+                  } else {
+                    // Send message (uses Upload icon per request)
+                    if (inputText.trim()) {
+                      handleGenerate();
+                    }
+                  }
+                }}
+                className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${isDarkMode ? 'bg-gray-600 text-gray-100 hover:bg-gray-500' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'} ${!isTyping && !inputText.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={isTyping ? 'Stop' : 'Send'}
+                disabled={!isTyping && !inputText.trim()}
+              >
+                {isTyping ? <StopCircle className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
               </button>
             </div>
           </div>

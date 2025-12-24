@@ -4984,11 +4984,7 @@ if __name__ == '__main__':
       </div>
 
       {/* Code Generation Modal */}
-      {(() => {
-        const shouldShowModal = showCodeModal || parentShowCodeModal;
-        console.log('EnhancedChartCustomizer: Modal render check - showCodeModal:', showCodeModal, 'parentShowCodeModal:', parentShowCodeModal, 'shouldShowModal:', shouldShowModal);
-        return shouldShowModal;
-      })() && (
+      {(showCodeModal || parentShowCodeModal) && (
         <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-[100]">
           <div className={`relative w-full max-w-3xl h-[70vh] rounded-xl shadow-2xl ${
             isDarkMode ? 'bg-gray-800' : 'bg-white'
